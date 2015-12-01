@@ -85,8 +85,7 @@
 #include <string.h>
 #include "allheaders.h"
 
-/* MS VC++ can't handle array initialization with static consts ! */
-#define L_BUF_SIZE		512
+static const l_int32  L_BUF_SIZE = 512;
 
     /* Cygwin needs an extension to prevent it from appending
      * ".exe" to the filename */

@@ -24,34 +24,38 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-#ifndef  LEPTONICA_BBUFFER_H
-#define  LEPTONICA_BBUFFER_H
-
 /*
- *  bbuffer.h
+--- *   autogen.*.h
  *
- *      Expandable byte buffer for reading data in from memory and
- *      writing data out to other memory.
- *
- *      This implements a queue of bytes, so data read in is put
- *      on the "back" of the queue (i.e., the end of the byte array)
- *      and data written out is taken from the "front" of the queue
- *      (i.e., from an index marker "nwritten" that is initially set at
- *      the beginning of the array.)  As usual with expandable
- *      arrays, we keep the size of the allocated array and the
- *      number of bytes that have been read into the array.
- *
- *      For implementation details, see bbuffer.c.
+ *   Automatically generated function prototype and associated
+ *   encoded serialized strings.
  */
 
-struct ByteBuffer
-{
-    l_int32      nalloc;       /* size of allocated byte array            */
-    l_int32      n;            /* number of bytes read into to the array  */
-    l_int32      nwritten;     /* number of bytes written from the array  */
-    l_uint8     *array;        /* byte array                              */
-};
-typedef struct ByteBuffer BBUFFER;
+--- #ifndef  LEPTONICA_AUTOGEN_*_H
+--- #define  LEPTONICA_AUTOGEN_*_H
 
+/*---------------------------------------------------------------------*/
+/*                         Function prototype                          */
+/*---------------------------------------------------------------------*/
 
-#endif  /* LEPTONICA_BBUFFER_H */
+#ifdef __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
+
+--- void *l_autodecode_*(l_int32  index);
+
+#ifdef __cplusplus
+}
+#endif  /* __cplusplus */
+
+/*---------------------------------------------------------------------*/
+/*                         Serialized strings                          */
+/*---------------------------------------------------------------------*/
+--- static const char *l_strdata_0 =
+---     "...";
+--- static const char *l_strdata_1 =
+---     "...";
+---   [etc]
+---
+---#endif  /* LEPTONICA_AUTOGEN_*_H */
+

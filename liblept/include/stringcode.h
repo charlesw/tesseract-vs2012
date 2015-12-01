@@ -24,34 +24,25 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-#ifndef  LEPTONICA_BBUFFER_H
-#define  LEPTONICA_BBUFFER_H
+#ifndef  LEPTONICA_STRINGCODE_H
+#define  LEPTONICA_STRINGCODE_H
 
 /*
- *  bbuffer.h
+ *  stringcode.h
  *
- *      Expandable byte buffer for reading data in from memory and
- *      writing data out to other memory.
- *
- *      This implements a queue of bytes, so data read in is put
- *      on the "back" of the queue (i.e., the end of the byte array)
- *      and data written out is taken from the "front" of the queue
- *      (i.e., from an index marker "nwritten" that is initially set at
- *      the beginning of the array.)  As usual with expandable
- *      arrays, we keep the size of the allocated array and the
- *      number of bytes that have been read into the array.
- *
- *      For implementation details, see bbuffer.c.
+ *     Data structure to hold accumulating generated code for storing
+ *     and extracing serializable leptonica objects (e.g., pixa, recog).
  */
 
-struct ByteBuffer
+struct L_StrCode
 {
-    l_int32      nalloc;       /* size of allocated byte array            */
-    l_int32      n;            /* number of bytes read into to the array  */
-    l_int32      nwritten;     /* number of bytes written from the array  */
-    l_uint8     *array;        /* byte array                              */
+    l_int32       fileno;      /* index for function and output file names   */
+    l_int32       ifunc;       /* index into struct currently being stored   */
+    SARRAY       *function;    /* store case code for extraction             */
+    SARRAY       *data;        /* store base64 encoded data as strings       */
+    SARRAY       *descr;       /* store line in description table            */
+    l_int32       n;           /* number of data strings                     */
 };
-typedef struct ByteBuffer BBUFFER;
+typedef struct L_StrCode  L_STRCODE;
 
-
-#endif  /* LEPTONICA_BBUFFER_H */
+#endif  /* LEPTONICA_STRINGCODE_H */
