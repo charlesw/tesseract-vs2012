@@ -1,3 +1,5 @@
+Please note that this repo has now been superseeded by [tesseract-vs](https://github.com/charlesw/tesseract-vs).
+
 tesseract-vs2013
 ================
 
