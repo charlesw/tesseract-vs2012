@@ -141,8 +141,7 @@
 #include "allheaders.h"
 
 static const l_int32  INITIAL_PTR_ARRAYSIZE = 50;     /* n'importe quoi */
-/* MS VC++ can't handle array initialization with static consts ! */
-#define L_BUF_SIZE		512
+static const l_int32  L_BUF_SIZE = 512;
 
     /* Static function */
 static l_int32 sarrayExtendArray(SARRAY *sa);

@@ -67,6 +67,8 @@
 		<Header Include="$(LibTiffDir)\include\tiffvers.h" />
 		
 		<Header Include="$(LibGifDir)\include\gif_lib.h" />
+		
+		<Header Include="include\leptonica_versionnumbers.props" />
 	
 		<LeptHeader Include="$(LibLeptDir)\include\*.h" />
 	</ItemGroup>
