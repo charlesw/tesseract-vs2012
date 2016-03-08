@@ -139,10 +139,9 @@
 #include <string.h>
 #include "allheaders.h"
 
-/* MS VC++ can't handle array initialization with static consts ! */
-#define L_BUF_SIZE		256
-#define INITIAL_PTR_ARRAYSIZE 50  /* n'import quoi */
-#define MANY_SELS 1000
+static const l_int32  L_BUF_SIZE = 256;
+static const l_int32  INITIAL_PTR_ARRAYSIZE = 50;  /* n'import quoi */
+static const l_int32  MANY_SELS = 1000;
 
     /* Static functions */
 static l_int32 selaExtendArray(SELA *sela);

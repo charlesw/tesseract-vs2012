@@ -49,8 +49,7 @@
 #include <math.h>
 #include "allheaders.h"
 
-/* MS VC++ can't handle array initialization with static consts ! */
-#define L_BUF_SIZE		512
+static const l_int32  L_BUF_SIZE = 512;
 
     /* Linear brick sel sizes, including all those that are required
      * for decomposable sels up to size 63. */

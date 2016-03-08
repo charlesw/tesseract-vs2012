@@ -8,9 +8,10 @@
 		<LibJpegDir>$(MSBuildProjectDirectory)\libjpeg</LibJpegDir>
 		<LibPngDir>$(MSBuildProjectDirectory)\libpng</LibPngDir>
 		<LibGifDir>$(MSBuildProjectDirectory)\giflib</LibGifDir>
-		<LibTiffDir>$(MSBuildProjectDirectory)\libtiff\libtiff</LibTiffDir>	
-		<LibLeptDir>$(MSBuildProjectDirectory)\liblept</LibLeptDir>
-	</PropertyGroup>
+		<LibTiffDir>$(MSBuildProjectDirectory)\libtiff\libtiff</LibTiffDir>
+    <LibWebpDir>$(MSBuildProjectDirectory)\libwebp</LibWebpDir>
+    <LibLeptDir>$(MSBuildProjectDirectory)\liblept</LibLeptDir>
+  </PropertyGroup>
 	<ItemGroup>
 		<Template Include="$(SourceDir)\AssemblyVersionInfo.template.cs" />
 		
@@ -67,7 +68,12 @@
 		<Header Include="$(LibTiffDir)\include\tiffvers.h" />
 		
 		<Header Include="$(LibGifDir)\include\gif_lib.h" />
-	
+
+
+		<Header Include="$(LibWebpDir)\src\webp\*.h" />
+
+		<Header Include="include\leptonica_versionnumbers.props" />
+
 		<LeptHeader Include="$(LibLeptDir)\include\*.h" />
 	</ItemGroup>
 	<Target Name="ExpandFlavors">

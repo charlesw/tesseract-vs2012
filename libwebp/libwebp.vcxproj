@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{183EA8C3-B543-4F7A-9475-6DA0FBB6BDA0}</ProjectGuid>
+    <RootNamespace>libwebp</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>libwebp-044</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>
+    </CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>
+    </CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>
+    </CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>
+    </CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\include\leptonica_versionnumbers.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\include\leptonica_versionnumbers.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\include\leptonica_versionnumbers.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\include\leptonica_versionnumbers.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)build\lib\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)\build\obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <TargetName>libwebp$(LIBWEBP_VERSION)-static-mtdll-debug</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)build\lib\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)\build\obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <TargetName>libwebp$(LIBWEBP_VERSION)-static-mtdll</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)build\lib\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)\build\obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <TargetName>libwebp$(LIBWEBP_VERSION)-static-mtdll-debug</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)build\lib\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)\build\obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <TargetName>libwebp$(LIBWEBP_VERSION)-static-mtdll</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <CompileAs>Default</CompileAs>
+      <AssemblerListingLocation>$(IntDir)\%(RelativeDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)\%(RelativeDir)\$(ProjectName).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)\%(RelativeDir)</XMLDocumentationFileName>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <CompileAs>Default</CompileAs>
+      <AssemblerListingLocation>$(IntDir)\%(RelativeDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
+      <XMLDocumentationFileName>$(IntDir)\%(RelativeDir)</XMLDocumentationFileName>
+      <ProgramDataBaseFileName>$(IntDir)\%(RelativeDir)\$(ProjectName).pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <CompileAs>Default</CompileAs>
+      <AssemblerListingLocation>$(IntDir)\%(RelativeDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
+      <XMLDocumentationFileName>$(IntDir)\%(RelativeDir)</XMLDocumentationFileName>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <CompileAs>Default</CompileAs>
+      <AssemblerListingLocation>$(IntDir)\%(RelativeDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
+      <XMLDocumentationFileName>$(IntDir)\%(RelativeDir)</XMLDocumentationFileName>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\dec\alpha.c" />
+    <ClCompile Include="src\dec\buffer.c" />
+    <ClCompile Include="src\dec\frame.c" />
+    <ClCompile Include="src\dec\idec.c" />
+    <ClCompile Include="src\dec\io.c" />
+    <ClCompile Include="src\dec\quant.c" />
+    <ClCompile Include="src\dec\tree.c" />
+    <ClCompile Include="src\dec\vp8.c" />
+    <ClCompile Include="src\dec\vp8l.c" />
+    <ClCompile Include="src\dec\webp.c" />
+    <ClCompile Include="src\demux\demux.c" />
+    <ClCompile Include="src\dsp\alpha_processing.c" />
+    <ClCompile Include="src\dsp\alpha_processing_sse2.c" />
+    <ClCompile Include="src\dsp\cpu.c" />
+    <ClCompile Include="src\dsp\dec.c" />
+    <ClCompile Include="src\dsp\dec_clip_tables.c" />
+    <ClCompile Include="src\dsp\dec_mips32.c" />
+    <ClCompile Include="src\dsp\dec_neon.c" />
+    <ClCompile Include="src\dsp\dec_sse2.c" />
+    <ClCompile Include="src\dsp\enc.c" />
+    <ClCompile Include="src\dsp\enc_avx2.c" />
+    <ClCompile Include="src\dsp\enc_mips32.c" />
+    <ClCompile Include="src\dsp\enc_neon.c" />
+    <ClCompile Include="src\dsp\enc_sse2.c" />
+    <ClCompile Include="src\dsp\lossless.c" />
+    <ClCompile Include="src\dsp\lossless_mips32.c" />
+    <ClCompile Include="src\dsp\lossless_neon.c" />
+    <ClCompile Include="src\dsp\lossless_sse2.c" />
+    <ClCompile Include="src\dsp\upsampling.c" />
+    <ClCompile Include="src\dsp\upsampling_neon.c" />
+    <ClCompile Include="src\dsp\upsampling_sse2.c" />
+    <ClCompile Include="src\dsp\yuv.c" />
+    <ClCompile Include="src\dsp\yuv_mips32.c" />
+    <ClCompile Include="src\dsp\yuv_sse2.c" />
+    <ClCompile Include="src\enc\alpha.c" />
+    <ClCompile Include="src\enc\analysis.c" />
+    <ClCompile Include="src\enc\backward_references.c" />
+    <ClCompile Include="src\enc\config.c" />
+    <ClCompile Include="src\enc\cost.c" />
+    <ClCompile Include="src\enc\filter.c" />
+    <ClCompile Include="src\enc\frame.c" />
+    <ClCompile Include="src\enc\histogram.c" />
+    <ClCompile Include="src\enc\iterator.c" />
+    <ClCompile Include="src\enc\picture.c" />
+    <ClCompile Include="src\enc\picture_csp.c" />
+    <ClCompile Include="src\enc\picture_psnr.c" />
+    <ClCompile Include="src\enc\picture_rescale.c" />
+    <ClCompile Include="src\enc\picture_tools.c" />
+    <ClCompile Include="src\enc\quant.c" />
+    <ClCompile Include="src\enc\syntax.c" />
+    <ClCompile Include="src\enc\token.c" />
+    <ClCompile Include="src\enc\tree.c" />
+    <ClCompile Include="src\enc\vp8l.c" />
+    <ClCompile Include="src\enc\webpenc.c" />
+    <ClCompile Include="src\mux\muxedit.c" />
+    <ClCompile Include="src\mux\muxinternal.c" />
+    <ClCompile Include="src\mux\muxread.c" />
+    <ClCompile Include="src\utils\bit_reader.c" />
+    <ClCompile Include="src\utils\bit_writer.c" />
+    <ClCompile Include="src\utils\color_cache.c" />
+    <ClCompile Include="src\utils\filters.c" />
+    <ClCompile Include="src\utils\huffman.c" />
+    <ClCompile Include="src\utils\huffman_encode.c" />
+    <ClCompile Include="src\utils\quant_levels.c" />
+    <ClCompile Include="src\utils\quant_levels_dec.c" />
+    <ClCompile Include="src\utils\random.c" />
+    <ClCompile Include="src\utils\rescaler.c" />
+    <ClCompile Include="src\utils\thread.c" />
+    <ClCompile Include="src\utils\utils.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\dec\alphai.h" />
+    <ClInclude Include="src\dec\decode_vp8.h" />
+    <ClInclude Include="src\dec\vp8i.h" />
+    <ClInclude Include="src\dec\vp8li.h" />
+    <ClInclude Include="src\dec\webpi.h" />
+    <ClInclude Include="src\dsp\dsp.h" />
+    <ClInclude Include="src\dsp\lossless.h" />
+    <ClInclude Include="src\dsp\neon.h" />
+    <ClInclude Include="src\dsp\yuv.h" />
+    <ClInclude Include="src\dsp\yuv_tables_sse2.h" />
+    <ClInclude Include="src\enc\backward_references.h" />
+    <ClInclude Include="src\enc\cost.h" />
+    <ClInclude Include="src\enc\histogram.h" />
+    <ClInclude Include="src\enc\vp8enci.h" />
+    <ClInclude Include="src\enc\vp8li.h" />
+    <ClInclude Include="src\mux\muxi.h" />
+    <ClInclude Include="src\utils\bit_reader.h" />
+    <ClInclude Include="src\utils\bit_reader_inl.h" />
+    <ClInclude Include="src\utils\bit_writer.h" />
+    <ClInclude Include="src\utils\color_cache.h" />
+    <ClInclude Include="src\utils\endian_inl.h" />
+    <ClInclude Include="src\utils\filters.h" />
+    <ClInclude Include="src\utils\huffman.h" />
+    <ClInclude Include="src\utils\huffman_encode.h" />
+    <ClInclude Include="src\utils\quant_levels.h" />
+    <ClInclude Include="src\utils\quant_levels_dec.h" />
+    <ClInclude Include="src\utils\random.h" />
+    <ClInclude Include="src\utils\rescaler.h" />
+    <ClInclude Include="src\utils\thread.h" />
+    <ClInclude Include="src\utils\utils.h" />
+    <ClInclude Include="src\webp\decode.h" />
+    <ClInclude Include="src\webp\demux.h" />
+    <ClInclude Include="src\webp\encode.h" />
+    <ClInclude Include="src\webp\format_constants.h" />
+    <ClInclude Include="src\webp\mux.h" />
+    <ClInclude Include="src\webp\mux_types.h" />
+    <ClInclude Include="src\webp\types.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
