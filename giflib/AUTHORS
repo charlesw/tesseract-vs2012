@@ -1,6 +1,3 @@
-Lennie Araki
-	Windows code providing a nicer interface and example program
-
 Michael Brown <michael_brown_uk[AT]hotmail.com>
         callbacks to write data via user defined function
 
@@ -8,7 +5,7 @@ Daniel Eisenbud <eisenbud[AT]google.com>
 	Fixes for crashes with invalid gif files and double freeing of
 	colormaps
 
-Gershon Elber
+Gershon Elber <gershon[AT]cs.technion.sc.il>
 	original giflib code
 
 Marc Ewing <marc[AT]redhat.com>
@@ -17,7 +14,7 @@ Marc Ewing <marc[AT]redhat.com>
 Toshio Kuratomi <toshio[AT]tiki-lounge.com>
         uncompressed gif writing code
         autoconf/automake process
-        current maintainer
+        former maintainer
 
 marek <marwaw[AT]users.sourceforge.net>
 	Gif initialization fix
@@ -30,7 +27,7 @@ Dick Porter <dick[AT]cymru.net>
         int/pointer fixes for Alpha
 
 Eric Raymond <esr[AT]snark.thyrsus.com>
-        long time former maintainer of giflib code
+        current as well as long time former maintainer of giflib code
 
 Petter Reinholdtsen <pere[AT]hungry.com>
 	Tru64 build fixs

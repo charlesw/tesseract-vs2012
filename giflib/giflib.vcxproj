@@ -19,19 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\dev2gif.c" />
     <ClCompile Include="src\dgif_lib.c" />
     <ClCompile Include="src\egif_lib.c" />
-    <ClCompile Include="src\getarg.c" />
     <ClCompile Include="src\gifalloc.c" />
     <ClCompile Include="src\gif_err.c" />
     <ClCompile Include="src\gif_font.c" />
     <ClCompile Include="src\gif_hash.c" />
-    <ClCompile Include="src\qprintf.c" />
+    <ClCompile Include="src\openbsd-reallocarray.c" />
     <ClCompile Include="src\quantize.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\getarg.h" />
     <ClInclude Include="include\gif_hash.h" />
     <ClInclude Include="include\gif_lib.h" />
     <ClInclude Include="include\gif_lib_private.h" />
