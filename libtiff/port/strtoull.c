@@ -1,7 +1,5 @@
-/* $Id: strtoul.c,v 1.2 2005/07/07 16:34:06 dron Exp $ */
-
-/*
- * Copyright (c) 1990, 1993
+/*-
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,37 +31,33 @@
  * SUCH DAMAGE.
  */
 
-#if 0
-static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
-__RCSID("$NetBSD: strtoul.c,v 1.16 2003/08/07 16:43:45 agc Exp $");
-#endif
-
-#include <ctype.h>
-#include <errno.h>
 #include <limits.h>
+#include <errno.h>
+#include <ctype.h>
 #include <stdlib.h>
 
 /*
- * Convert a string to an unsigned long integer.
+ * Convert a string to an unsigned long long integer.
  *
- * Ignores `locale' stuff.  Assumes that the upper and lower case
+ * Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-unsigned long
-strtoul(const char *nptr, char **endptr, int base)
+unsigned long long
+strtoull(const char *nptr, char **endptr, int base)
 {
 	const char *s;
-	unsigned long acc, cutoff;
-	int c;
+	unsigned long long acc;
+	char c;
+	unsigned long long cutoff;
 	int neg, any, cutlim;
 
 	/*
-	 * See strtol for comments as to the logic used.
+	 * See strtoq for comments as to the logic used.
 	 */
 	s = nptr;
 	do {
-		c = (unsigned char) *s++;
-	} while (isspace(c));
+		c = *s++;
+	} while (isspace((unsigned char)c));
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
@@ -69,41 +67,50 @@ strtoul(const char *nptr, char **endptr, int base)
 			c = *s++;
 	}
 	if ((base == 0 || base == 16) &&
-	    c == '0' && (*s == 'x' || *s == 'X')) {
+	    c == '0' && (*s == 'x' || *s == 'X') &&
+	    ((s[1] >= '0' && s[1] <= '9') ||
+	    (s[1] >= 'A' && s[1] <= 'F') ||
+	    (s[1] >= 'a' && s[1] <= 'f'))) {
 		c = s[1];
 		s += 2;
 		base = 16;
 	}
 	if (base == 0)
 		base = c == '0' ? 8 : 10;
+	acc = any = 0;
+	if (base < 2 || base > 36)
+		goto noconv;
 
-	cutoff = ULONG_MAX / (unsigned long)base;
-	cutlim = (int)(ULONG_MAX % (unsigned long)base);
-	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
-		if (isdigit(c))
+	cutoff = ULLONG_MAX / base;
+	cutlim = ULLONG_MAX % base;
+	for ( ; ; c = *s++) {
+		if (c >= '0' && c <= '9')
 			c -= '0';
-		else if (isalpha(c))
-			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
+		else if (c >= 'A' && c <= 'Z')
+			c -= 'A' - 10;
+		else if (c >= 'a' && c <= 'z')
+			c -= 'a' - 10;
 		else
 			break;
 		if (c >= base)
 			break;
-		if (any < 0)
-			continue;
-		if (acc > cutoff || (acc == cutoff && c > cutlim)) {
+		if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
 			any = -1;
-			acc = ULONG_MAX;
-			errno = ERANGE;
-		} else {
+		else {
 			any = 1;
-			acc *= (unsigned long)base;
+			acc *= base;
 			acc += c;
 		}
 	}
-	if (neg && any > 0)
+	if (any < 0) {
+		acc = ULLONG_MAX;
+		errno = ERANGE;
+	} else if (!any) {
+noconv:
+		errno = EINVAL;
+	} else if (neg)
 		acc = -acc;
-	if (endptr != 0)
-		/* LINTED interface specification */
+	if (endptr != NULL)
 		*endptr = (char *)(any ? s - 1 : nptr);
 	return (acc);
 }

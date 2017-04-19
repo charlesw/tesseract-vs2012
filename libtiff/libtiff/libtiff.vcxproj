@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0402F7E8-9BE8-4D59-A789-BBB96B284856}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>libtiff-394</ProjectName>
+    <ProjectName>libtiff-407</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -197,7 +197,6 @@
     <ClCompile Include="src\tif_jpeg.c" />
     <ClCompile Include="src\tif_luv.c" />
     <ClCompile Include="src\tif_lzw.c" />
-    <ClCompile Include="src\tif_msdos.c" />
     <ClCompile Include="src\tif_next.c" />
     <ClCompile Include="src\tif_ojpeg.c" />
     <ClCompile Include="src\tif_open.c" />
@@ -215,6 +214,9 @@
     <ClCompile Include="src\tif_warning.c" />
     <ClCompile Include="src\tif_write.c" />
     <ClCompile Include="src\tif_zip.c" />
+    <ClCompile Include="src\tif_lzma.c" />
+    <ClCompile Include="src\tif_jpeg_12.c" />
+    <ClCompile Include="src\mkg3states.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\tiffconf.h.in" />
