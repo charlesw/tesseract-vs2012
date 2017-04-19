@@ -32,6 +32,10 @@
     <ClInclude Include="include\gif_hash.h" />
     <ClInclude Include="include\gif_lib.h" />
     <ClInclude Include="include\gif_lib_private.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="giflib-514.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C13F9A1D-8E91-4239-ABF1-E0F01F6DBADB}</ProjectGuid>

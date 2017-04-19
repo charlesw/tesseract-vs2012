@@ -160,6 +160,7 @@
     <ClInclude Include="include\png.h" />
     <ClInclude Include="include\pngconf.h" />
     <ClInclude Include="include\pngpriv.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\png.c" />
@@ -177,6 +178,9 @@
     <ClCompile Include="src\pngwrite.c" />
     <ClCompile Include="src\pngwtran.c" />
     <ClCompile Include="src\pngwutil.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="libpng-1629.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

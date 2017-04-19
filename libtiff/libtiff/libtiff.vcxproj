@@ -185,6 +185,7 @@
     <ClInclude Include="include\tif_fax3.h" />
     <ClInclude Include="include\tif_predict.h" />
     <ClInclude Include="include\uvcode.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\getopt.c" />
@@ -233,6 +234,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="include\tiffconf.h.in" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="libtiff-407.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

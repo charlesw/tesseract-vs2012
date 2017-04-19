@@ -224,6 +224,10 @@
     <ClInclude Include="include\transupp.h" />
     <ClInclude Include="include\cderror.h" />
     <ClInclude Include="include\cdjpeg.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="libjpeg-9b.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
