@@ -19,7 +19,7 @@
 // Right now, some intrinsics functions seem slower, so we disable them
 // everywhere except aarch64 where the inline assembly is incompatible.
 #if defined(__aarch64__)
-#define USE_INTRINSICS   // use intrinsics when possible
+#define WEBP_USE_INTRINSICS   // use intrinsics when possible
 #endif
 
 #define INIT_VECTOR2(v, a, b) do {  \
@@ -78,5 +78,23 @@ static WEBP_INLINE int32x4x4_t Transpose4x4(const int32x4x4_t rows) {
     return out;
   }
 }
+
+#if 0     // Useful debug macro.
+#include <stdio.h>
+#define PRINT_REG(REG, SIZE) do {                       \
+  int i;                                                \
+  printf("%s \t[%d]: 0x", #REG, SIZE);                  \
+  if (SIZE == 8) {                                      \
+    uint8_t _tmp[8];                                    \
+    vst1_u8(_tmp, (REG));                               \
+    for (i = 0; i < 8; ++i) printf("%.2x ", _tmp[i]);   \
+  } else if (SIZE == 16) {                              \
+    uint16_t _tmp[4];                                   \
+    vst1_u16(_tmp, (REG));                              \
+    for (i = 0; i < 4; ++i) printf("%.4x ", _tmp[i]);   \
+  }                                                     \
+  printf("\n");                                         \
+} while (0)
+#endif
 
 #endif  // WEBP_DSP_NEON_H_

@@ -20,17 +20,11 @@
 #include "webp/config.h"
 #endif
 
-#include "webp/encode.h"
-
-#include "./example_util.h"
-#include "./metadata.h"
+#include "../examples/example_util.h"
+#include "../imageio/image_dec.h"
+#include "../imageio/imageio_util.h"
 #include "./stopwatch.h"
-
-#include "./jpegdec.h"
-#include "./pngdec.h"
-#include "./tiffdec.h"
-#include "./webpdec.h"
-#include "./wicdec.h"
+#include "webp/encode.h"
 
 #ifndef WEBP_DLL
 #ifdef __cplusplus
@@ -48,127 +42,81 @@ extern void* VP8GetCPUInfo;   // opaque forward declaration.
 
 static int verbose = 0;
 
-static int ReadYUV(FILE* in_file, WebPPicture* const pic) {
+static int ReadYUV(const uint8_t* const data, size_t data_size,
+                   WebPPicture* const pic) {
   const int use_argb = pic->use_argb;
   const int uv_width = (pic->width + 1) / 2;
   const int uv_height = (pic->height + 1) / 2;
-  int y;
-  int ok = 0;
+  const int y_plane_size = pic->width * pic->height;
+  const int uv_plane_size = uv_width * uv_height;
+  const size_t expected_data_size = y_plane_size + 2 * uv_plane_size;
+
+  if (data_size != expected_data_size) {
+    fprintf(stderr,
+            "input data doesn't have the expected size (%d instead of %d)\n",
+            (int)data_size, (int)expected_data_size);
+    return 0;
+  }
 
   pic->use_argb = 0;
-  if (!WebPPictureAlloc(pic)) return ok;
-
-  for (y = 0; y < pic->height; ++y) {
-    if (fread(pic->y + y * pic->y_stride, pic->width, 1, in_file) != 1) {
-      goto End;
-    }
-  }
-  for (y = 0; y < uv_height; ++y) {
-    if (fread(pic->u + y * pic->uv_stride, uv_width, 1, in_file) != 1)
-      goto End;
-  }
-  for (y = 0; y < uv_height; ++y) {
-    if (fread(pic->v + y * pic->uv_stride, uv_width, 1, in_file) != 1)
-      goto End;
-  }
-  ok = 1;
-  if (use_argb) ok = WebPPictureYUVAToARGB(pic);
-
- End:
-  return ok;
+  if (!WebPPictureAlloc(pic)) return 0;
+  ImgIoUtilCopyPlane(data, pic->width, pic->y, pic->y_stride,
+                     pic->width, pic->height);
+  ImgIoUtilCopyPlane(data + y_plane_size, uv_width,
+                     pic->u, pic->uv_stride, uv_width, uv_height);
+  ImgIoUtilCopyPlane(data + y_plane_size + uv_plane_size, uv_width,
+                     pic->v, pic->uv_stride, uv_width, uv_height);
+  return use_argb ? WebPPictureYUVAToARGB(pic) : 1;
 }
 
 #ifdef HAVE_WINCODEC_H
 
 static int ReadPicture(const char* const filename, WebPPicture* const pic,
                        int keep_alpha, Metadata* const metadata) {
-  int ok;
+  int ok = 0;
+  const uint8_t* data = NULL;
+  size_t data_size = 0;
   if (pic->width != 0 && pic->height != 0) {
-    // If image size is specified, infer it as YUV format.
-    FILE* in_file = fopen(filename, "rb");
-    if (in_file == NULL) {
-      fprintf(stderr, "Error! Cannot open input file '%s'\n", filename);
-      return 0;
-    }
-    ok = ReadYUV(in_file, pic);
-    fclose(in_file);
+    ok = ImgIoUtilReadFile(filename, &data, &data_size);
+    ok = ok && ReadYUV(data, data_size, pic);
   } else {
     // If no size specified, try to decode it using WIC.
     ok = ReadPictureWithWIC(filename, pic, keep_alpha, metadata);
     if (!ok) {
-      ok = ReadWebP(filename, pic, keep_alpha, metadata);
+      ok = ImgIoUtilReadFile(filename, &data, &data_size);
+      ok = ok && ReadWebP(data, data_size, pic, keep_alpha, metadata);
     }
   }
   if (!ok) {
     fprintf(stderr, "Error! Could not process file %s\n", filename);
   }
+  free((void*)data);
   return ok;
 }
 
 #else  // !HAVE_WINCODEC_H
 
-typedef enum {
-  PNG_ = 0,
-  JPEG_,
-  TIFF_,  // 'TIFF' clashes with libtiff
-  WEBP_,
-  UNSUPPORTED
-} InputFileFormat;
-
-static InputFileFormat GetImageType(FILE* in_file) {
-  InputFileFormat format = UNSUPPORTED;
-  uint32_t magic1, magic2;
-  uint8_t buf[12];
-
-  if ((fread(&buf[0], 12, 1, in_file) != 1) ||
-      (fseek(in_file, 0, SEEK_SET) != 0)) {
-    return format;
-  }
-
-  magic1 = ((uint32_t)buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
-  magic2 = ((uint32_t)buf[8] << 24) | (buf[9] << 16) | (buf[10] << 8) | buf[11];
-  if (magic1 == 0x89504E47U) {
-    format = PNG_;
-  } else if (magic1 >= 0xFFD8FF00U && magic1 <= 0xFFD8FFFFU) {
-    format = JPEG_;
-  } else if (magic1 == 0x49492A00 || magic1 == 0x4D4D002A) {
-    format = TIFF_;
-  } else if (magic1 == 0x52494646 && magic2 == 0x57454250) {
-    format = WEBP_;
-  }
-  return format;
-}
-
 static int ReadPicture(const char* const filename, WebPPicture* const pic,
                        int keep_alpha, Metadata* const metadata) {
+  const uint8_t* data = NULL;
+  size_t data_size = 0;
   int ok = 0;
-  FILE* in_file = fopen(filename, "rb");
-  if (in_file == NULL) {
-    fprintf(stderr, "Error! Cannot open input file '%s'\n", filename);
-    return ok;
-  }
+
+  ok = ImgIoUtilReadFile(filename, &data, &data_size);
+  if (!ok) goto End;
 
   if (pic->width == 0 || pic->height == 0) {
-    // If no size specified, try to decode it as PNG/JPEG (as appropriate).
-    const InputFileFormat format = GetImageType(in_file);
-    if (format == PNG_) {
-      ok = ReadPNG(in_file, pic, keep_alpha, metadata);
-    } else if (format == JPEG_) {
-      ok = ReadJPEG(in_file, pic, metadata);
-    } else if (format == TIFF_) {
-      ok = ReadTIFF(filename, pic, keep_alpha, metadata);
-    } else if (format == WEBP_) {
-      ok = ReadWebP(filename, pic, keep_alpha, metadata);
-    }
+    WebPImageReader reader = WebPGuessImageReader(data, data_size);
+    ok = reader(data, data_size, pic, keep_alpha, metadata);
   } else {
     // If image size is specified, infer it as YUV format.
-    ok = ReadYUV(in_file, pic);
+    ok = ReadYUV(data, data_size, pic);
   }
+ End:
   if (!ok) {
     fprintf(stderr, "Error! Could not process file %s\n", filename);
   }
-
-  fclose(in_file);
+  free((void*)data);
   return ok;
 }
 
@@ -212,6 +160,8 @@ static void PrintFullLosslessInfo(const WebPAuxStats* const stats,
                                   const char* const description) {
   fprintf(stderr, "Lossless-%s compressed size: %d bytes\n",
           description, stats->lossless_size);
+  fprintf(stderr, "  * Header size: %d bytes, image data size: %d\n",
+          stats->lossless_hdr_size, stats->lossless_data_size);
   if (stats->lossless_features) {
     fprintf(stderr, "  * Lossless features used:");
     if (stats->lossless_features & 1) fprintf(stderr, " PREDICTION");
@@ -347,6 +297,10 @@ static int DumpPicture(const WebPPicture* const picture, const char* PGM_name) {
   const int uv_width = (picture->width + 1) / 2;
   const int uv_height = (picture->height + 1) / 2;
   const int stride = (picture->width + 1) & ~1;
+  const uint8_t* src_y = picture->y;
+  const uint8_t* src_u = picture->u;
+  const uint8_t* src_v = picture->v;
+  const uint8_t* src_a = picture->a;
   const int alpha_height =
       WebPPictureHasTransparency(picture) ? picture->height : 0;
   const int height = picture->height + uv_height + alpha_height;
@@ -354,20 +308,20 @@ static int DumpPicture(const WebPPicture* const picture, const char* PGM_name) {
   if (f == NULL) return 0;
   fprintf(f, "P5\n%d %d\n255\n", stride, height);
   for (y = 0; y < picture->height; ++y) {
-    if (fwrite(picture->y + y * picture->y_stride, picture->width, 1, f) != 1)
-      return 0;
+    if (fwrite(src_y, picture->width, 1, f) != 1) return 0;
     if (picture->width & 1) fputc(0, f);  // pad
+    src_y += picture->y_stride;
   }
   for (y = 0; y < uv_height; ++y) {
-    if (fwrite(picture->u + y * picture->uv_stride, uv_width, 1, f) != 1)
-      return 0;
-    if (fwrite(picture->v + y * picture->uv_stride, uv_width, 1, f) != 1)
-      return 0;
+    if (fwrite(src_u, uv_width, 1, f) != 1) return 0;
+    if (fwrite(src_v, uv_width, 1, f) != 1) return 0;
+    src_u += picture->uv_stride;
+    src_v += picture->uv_stride;
   }
   for (y = 0; y < alpha_height; ++y) {
-    if (fwrite(picture->a + y * picture->a_stride, picture->width, 1, f) != 1)
-      return 0;
+    if (fwrite(src_a, picture->width, 1, f) != 1) return 0;
     if (picture->width & 1) fputc(0, f);  // pad
+    src_a += picture->a_stride;
   }
   fclose(f);
   return 1;
@@ -565,33 +519,38 @@ static void HelpLong(void) {
   printf("Windows builds can take as input any of the files handled by WIC.\n");
 #endif
   printf("\nOptions:\n");
-  printf("  -h / -help  ............ short help\n");
-  printf("  -H / -longhelp  ........ long help\n");
-  printf("  -q <float> ............. quality factor (0:small..100:big)\n");
-  printf("  -alpha_q <int> ......... transparency-compression quality "
-         "(0..100)\n");
+  printf("  -h / -help ............. short help\n");
+  printf("  -H / -longhelp ......... long help\n");
+  printf("  -q <float> ............. quality factor (0:small..100:big), "
+         "default=75\n");
+  printf("  -alpha_q <int> ......... transparency-compression quality (0..100),"
+         "\n                           default=100\n");
   printf("  -preset <string> ....... preset setting, one of:\n");
   printf("                            default, photo, picture,\n");
   printf("                            drawing, icon, text\n");
   printf("     -preset must come first, as it overwrites other parameters\n");
-#if WEBP_ENCODER_ABI_VERSION > 0x0202
   printf("  -z <int> ............... activates lossless preset with given\n"
          "                           level in [0:fast, ..., 9:slowest]\n");
-#endif
   printf("\n");
-  printf("  -m <int> ............... compression method (0=fast, 6=slowest)\n");
-  printf("  -segments <int> ........ number of segments to use (1..4)\n");
+  printf("  -m <int> ............... compression method (0=fast, 6=slowest), "
+         "default=4\n");
+  printf("  -segments <int> ........ number of segments to use (1..4), "
+         "default=4\n");
   printf("  -size <int> ............ target size (in bytes)\n");
   printf("  -psnr <float> .......... target PSNR (in dB. typically: 42)\n");
   printf("\n");
   printf("  -s <int> <int> ......... input size (width x height) for YUV\n");
-  printf("  -sns <int> ............. spatial noise shaping (0:off, 100:max)\n");
-  printf("  -f <int> ............... filter strength (0=off..100)\n");
+  printf("  -sns <int> ............. spatial noise shaping (0:off, 100:max), "
+         "default=50\n");
+  printf("  -f <int> ............... filter strength (0=off..100), "
+         "default=60\n");
   printf("  -sharpness <int> ....... "
-         "filter sharpness (0:most .. 7:least sharp)\n");
+         "filter sharpness (0:most .. 7:least sharp), default=0\n");
   printf("  -strong ................ use strong filter instead "
                                      "of simple (default)\n");
   printf("  -nostrong .............. use simple filter instead of strong\n");
+  printf("  -sharp_yuv ............. use sharper (and slower) RGB->YUV "
+                                     "conversion\n");
   printf("  -partition_limit <int> . limit quality to fit the 512k limit on\n");
   printf("                           "
          "the first partition (0=no degradation ... 100=full)\n");
@@ -605,16 +564,24 @@ static void HelpLong(void) {
   printf("  -print_ssim ............ prints averaged SSIM distortion\n");
   printf("  -print_lsim ............ prints local-similarity distortion\n");
   printf("  -d <file.pgm> .......... dump the compressed output (PGM file)\n");
-  printf("  -alpha_method <int> .... transparency-compression method (0..1)\n");
+  printf("  -alpha_method <int> .... transparency-compression method (0..1), "
+         "default=1\n");
   printf("  -alpha_filter <string> . predictive filtering for alpha plane,\n");
   printf("                           one of: none, fast (default) or best\n");
-  printf("  -alpha_cleanup ......... clean RGB values in transparent area\n");
+  printf("  -exact ................. preserve RGB values in transparent area, "
+         "default=off\n");
   printf("  -blend_alpha <hex> ..... blend colors against background color\n"
          "                           expressed as RGB values written in\n"
          "                           hexadecimal, e.g. 0xc0e0d0 for red=0xc0\n"
          "                           green=0xe0 and blue=0xd0\n");
   printf("  -noalpha ............... discard any transparency information\n");
-  printf("  -lossless .............. encode image losslessly\n");
+  printf("  -lossless .............. encode image losslessly, default=off\n");
+  printf("  -near_lossless <int> ... use near-lossless image\n"
+         "                           preprocessing (0..100=off), "
+         "default=100\n");
+#ifdef WEBP_EXPERIMENTAL_FEATURES  /* not documented yet */
+  printf("  -delta_palette ......... use delta palettization\n");
+#endif  // WEBP_EXPERIMENTAL_FEATURES
   printf("  -hint <string> ......... specify image characteristics hint,\n");
   printf("                           one of: photo, picture or graph\n");
 
@@ -679,10 +646,8 @@ int main(int argc, const char *argv[]) {
   uint32_t background_color = 0xffffffu;
   int crop = 0, crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
   int resize_w = 0, resize_h = 0;
-#if WEBP_ENCODER_ABI_VERSION > 0x0202
   int lossless_preset = 6;
   int use_lossless_preset = -1;  // -1=unset, 0=don't use, 1=use it
-#endif
   int show_progress = 0;
   int keep_metadata = 0;
   int metadata_written = 0;
@@ -736,25 +701,31 @@ int main(int argc, const char *argv[]) {
     } else if (!strcmp(argv[c], "-s") && c < argc - 2) {
       picture.width = ExUtilGetInt(argv[++c], 0, &parse_error);
       picture.height = ExUtilGetInt(argv[++c], 0, &parse_error);
+      if (picture.width > WEBP_MAX_DIMENSION || picture.width < 0 ||
+          picture.height > WEBP_MAX_DIMENSION ||  picture.height < 0) {
+        fprintf(stderr,
+                "Specified dimension (%d x %d) is out of range.\n",
+                picture.width, picture.height);
+        goto Error;
+      }
     } else if (!strcmp(argv[c], "-m") && c < argc - 1) {
       config.method = ExUtilGetInt(argv[++c], 0, &parse_error);
-#if WEBP_ENCODER_ABI_VERSION > 0x0202
       use_lossless_preset = 0;   // disable -z option
-#endif
     } else if (!strcmp(argv[c], "-q") && c < argc - 1) {
       config.quality = ExUtilGetFloat(argv[++c], &parse_error);
-#if WEBP_ENCODER_ABI_VERSION > 0x0202
       use_lossless_preset = 0;   // disable -z option
     } else if (!strcmp(argv[c], "-z") && c < argc - 1) {
       lossless_preset = ExUtilGetInt(argv[++c], 0, &parse_error);
       if (use_lossless_preset != 0) use_lossless_preset = 1;
-#endif
     } else if (!strcmp(argv[c], "-alpha_q") && c < argc - 1) {
       config.alpha_quality = ExUtilGetInt(argv[++c], 0, &parse_error);
     } else if (!strcmp(argv[c], "-alpha_method") && c < argc - 1) {
       config.alpha_compression = ExUtilGetInt(argv[++c], 0, &parse_error);
     } else if (!strcmp(argv[c], "-alpha_cleanup")) {
-      keep_alpha = keep_alpha ? 2 : 0;
+      // This flag is obsolete, does opposite of -exact.
+      config.exact = 0;
+    } else if (!strcmp(argv[c], "-exact")) {
+      config.exact = 1;
     } else if (!strcmp(argv[c], "-blend_alpha") && c < argc - 1) {
       blend_alpha = 1;
       // background color is given in hex with an optional '0x' prefix
@@ -776,6 +747,14 @@ int main(int argc, const char *argv[]) {
       keep_alpha = 0;
     } else if (!strcmp(argv[c], "-lossless")) {
       config.lossless = 1;
+    } else if (!strcmp(argv[c], "-near_lossless") && c < argc - 1) {
+      config.near_lossless = ExUtilGetInt(argv[++c], 0, &parse_error);
+      config.lossless = 1;  // use near-lossless only with lossless
+#ifdef WEBP_EXPERIMENTAL_FEATURES
+    } else if (!strcmp(argv[c], "-delta_palette")) {
+      config.use_delta_palette = 1;
+      config.lossless = 1;  // delta-palette is for lossless only
+#endif  // WEBP_EXPERIMENTAL_FEATURES
     } else if (!strcmp(argv[c], "-hint") && c < argc - 1) {
       ++c;
       if (!strcmp(argv[c], "photo")) {
@@ -810,6 +789,8 @@ int main(int argc, const char *argv[]) {
       config.filter_type = 0;
     } else if (!strcmp(argv[c], "-sharpness") && c < argc - 1) {
       config.filter_sharpness = ExUtilGetInt(argv[++c], 0, &parse_error);
+    } else if (!strcmp(argv[c], "-sharp_yuv")) {
+      config.use_sharp_yuv = 1;
     } else if (!strcmp(argv[c], "-pass") && c < argc - 1) {
       config.pass = ExUtilGetInt(argv[++c], 0, &parse_error);
     } else if (!strcmp(argv[c], "-pre") && c < argc - 1) {
@@ -836,7 +817,7 @@ int main(int argc, const char *argv[]) {
     } else if (!strcmp(argv[c], "-version")) {
       const int version = WebPGetEncoderVersion();
       printf("%d.%d.%d\n",
-        (version >> 16) & 0xff, (version >> 8) & 0xff, version & 0xff);
+             (version >> 16) & 0xff, (version >> 8) & 0xff, version & 0xff);
       return 0;
     } else if (!strcmp(argv[c], "-progress")) {
       show_progress = 1;
@@ -935,14 +916,12 @@ int main(int argc, const char *argv[]) {
     goto Error;
   }
 
-#if WEBP_ENCODER_ABI_VERSION > 0x0202
   if (use_lossless_preset == 1) {
     if (!WebPConfigLosslessPreset(&config, lossless_preset)) {
       fprintf(stderr, "Invalid lossless preset (-z %d)\n", lossless_preset);
       goto Error;
     }
   }
-#endif
 
   // Check for unsupported command line options for lossless mode and log
   // warning for such options.
@@ -956,13 +935,23 @@ int main(int argc, const char *argv[]) {
                       " encoding. Ignoring this option!\n");
     }
   }
+  // If a target size or PSNR was given, but somehow the -pass option was
+  // omitted, force a reasonable value.
+  if (config.target_size > 0 || config.target_PSNR > 0) {
+    if (config.pass == 1) config.pass = 6;
+  }
 
   if (!WebPValidateConfig(&config)) {
     fprintf(stderr, "Error! Invalid configuration.\n");
     goto Error;
   }
 
-  // Read the input
+  // Read the input. We need to decide if we prefer ARGB or YUVA
+  // samples, depending on the expected compression mode (this saves
+  // some conversion steps).
+  picture.use_argb = (config.lossless || config.use_sharp_yuv ||
+                      config.preprocessing > 0 ||
+                      crop || (resize_w | resize_h) > 0);
   if (verbose) {
     StopwatchReset(&stop_watch);
   }
@@ -977,10 +966,6 @@ int main(int argc, const char *argv[]) {
     WebPBlendAlpha(&picture, background_color);
   }
 
-  if (keep_alpha == 2) {
-    WebPCleanupTransparentArea(&picture);
-  }
-
   if (verbose) {
     const double read_time = StopwatchReadAndReset(&stop_watch);
     fprintf(stderr, "Time to read input: %.3fs\n", read_time);
@@ -989,7 +974,7 @@ int main(int argc, const char *argv[]) {
   // Open the output
   if (out_file != NULL) {
     const int use_stdout = !strcmp(out_file, "-");
-    out = use_stdout ? ExUtilSetBinaryMode(stdout) : fopen(out_file, "wb");
+    out = use_stdout ? ImgIoUtilSetBinaryMode(stdout) : fopen(out_file, "wb");
     if (out == NULL) {
       fprintf(stderr, "Error! Cannot open output file '%s'\n", out_file);
       goto Error;
@@ -1017,7 +1002,7 @@ int main(int argc, const char *argv[]) {
     picture.user_data = (void*)in_file;
   }
 
-  // Compress
+  // Crop & resize.
   if (verbose) {
     StopwatchReset(&stop_watch);
   }
@@ -1034,11 +1019,21 @@ int main(int argc, const char *argv[]) {
       goto Error;
     }
   }
+  if (verbose && (crop != 0 || (resize_w | resize_h) > 0)) {
+    const double preproc_time = StopwatchReadAndReset(&stop_watch);
+    fprintf(stderr, "Time to crop/resize picture: %.3fs\n", preproc_time);
+  }
+
   if (picture.extra_info_type > 0) {
     AllocExtraInfo(&picture);
   }
   if (print_distortion >= 0) {  // Save original picture for later comparison
     WebPPictureCopy(&picture, &original_picture);
+  }
+
+  // Compress.
+  if (verbose) {
+    StopwatchReset(&stop_watch);
   }
   if (!WebPEncode(&config, &picture)) {
     fprintf(stderr, "Error! Cannot encode picture as WebP\n");
@@ -1103,25 +1098,14 @@ int main(int argc, const char *argv[]) {
     if (print_distortion >= 0) {    // print distortion
       static const char* distortion_names[] = { "PSNR", "SSIM", "LSIM" };
       float values[5];
-      // Comparison is performed in YUVA colorspace.
-      if (original_picture.use_argb &&
-          !WebPPictureARGBToYUVA(&original_picture, WEBP_YUV420A)) {
-       fprintf(stderr, "Error while converting original picture to YUVA.\n");
-        goto Error;
-      }
-      if (picture.use_argb &&
-          !WebPPictureARGBToYUVA(&picture, WEBP_YUV420A)) {
-        fprintf(stderr, "Error while converting compressed picture to YUVA.\n");
-        goto Error;
-      }
       if (!WebPPictureDistortion(&picture, &original_picture,
                                  print_distortion, values)) {
         fprintf(stderr, "Error while computing the distortion.\n");
         goto Error;
       }
       if (!short_output) {
-        fprintf(stderr, "%s: Y:%.2f U:%.2f V:%.2f A:%.2f  Total:%.2f\n",
-                distortion_names[print_distortion],
+        fprintf(stderr, "%s: ", distortion_names[print_distortion]);
+        fprintf(stderr, "B:%.2f G:%.2f R:%.2f A:%.2f  Total:%.2f\n",
                 values[0], values[1], values[2], values[3], values[4]);
       } else {
         fprintf(stderr, "%7d %.4f\n", picture.stats->coded_size, values[4]);
@@ -1134,11 +1118,7 @@ int main(int argc, const char *argv[]) {
   return_value = 0;
 
  Error:
-#if WEBP_ENCODER_ABI_VERSION > 0x0203
   WebPMemoryWriterClear(&memory_writer);
-#else
-  free(memory_writer.mem);
-#endif
   free(picture.extra_info);
   MetadataFree(&metadata);
   WebPPictureFree(&picture);

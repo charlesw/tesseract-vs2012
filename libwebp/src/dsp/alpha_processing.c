@@ -134,7 +134,7 @@ static WEBP_INLINE uint32_t GetScale(uint32_t a, int inverse) {
 
 #endif    // USE_TABLES_FOR_ALPHA_MULT
 
-static void MultARGBRow(uint32_t* const ptr, int width, int inverse) {
+void WebPMultARGBRowC(uint32_t* const ptr, int width, int inverse) {
   int x;
   for (x = 0; x < width; ++x) {
     const uint32_t argb = ptr[x];
@@ -154,8 +154,8 @@ static void MultARGBRow(uint32_t* const ptr, int width, int inverse) {
   }
 }
 
-static void MultRow(uint8_t* const ptr, const uint8_t* const alpha,
-                    int width, int inverse) {
+void WebPMultRowC(uint8_t* const ptr, const uint8_t* const alpha,
+                  int width, int inverse) {
   int x;
   for (x = 0; x < width; ++x) {
     const uint32_t a = alpha[x];
@@ -284,9 +284,41 @@ static void ApplyAlphaMultiply_16b(uint8_t* rgba4444,
 #endif
 }
 
-static int ExtractAlpha(const uint8_t* argb, int argb_stride,
-                        int width, int height,
-                        uint8_t* alpha, int alpha_stride) {
+static int DispatchAlpha_C(const uint8_t* alpha, int alpha_stride,
+                           int width, int height,
+                           uint8_t* dst, int dst_stride) {
+  uint32_t alpha_mask = 0xff;
+  int i, j;
+
+  for (j = 0; j < height; ++j) {
+    for (i = 0; i < width; ++i) {
+      const uint32_t alpha_value = alpha[i];
+      dst[4 * i] = alpha_value;
+      alpha_mask &= alpha_value;
+    }
+    alpha += alpha_stride;
+    dst += dst_stride;
+  }
+
+  return (alpha_mask != 0xff);
+}
+
+static void DispatchAlphaToGreen_C(const uint8_t* alpha, int alpha_stride,
+                                   int width, int height,
+                                   uint32_t* dst, int dst_stride) {
+  int i, j;
+  for (j = 0; j < height; ++j) {
+    for (i = 0; i < width; ++i) {
+      dst[i] = alpha[i] << 8;  // leave A/R/B channels zero'd.
+    }
+    alpha += alpha_stride;
+    dst += dst_stride;
+  }
+}
+
+static int ExtractAlpha_C(const uint8_t* argb, int argb_stride,
+                          int width, int height,
+                          uint8_t* alpha, int alpha_stride) {
   uint8_t alpha_mask = 0xff;
   int i, j;
 
@@ -302,32 +334,62 @@ static int ExtractAlpha(const uint8_t* argb, int argb_stride,
   return (alpha_mask == 0xff);
 }
 
+static void ExtractGreen_C(const uint32_t* argb, uint8_t* alpha, int size) {
+  int i;
+  for (i = 0; i < size; ++i) alpha[i] = argb[i] >> 8;
+}
+
 void (*WebPApplyAlphaMultiply)(uint8_t*, int, int, int, int);
 void (*WebPApplyAlphaMultiply4444)(uint8_t*, int, int, int);
+int (*WebPDispatchAlpha)(const uint8_t*, int, int, int, uint8_t*, int);
+void (*WebPDispatchAlphaToGreen)(const uint8_t*, int, int, int, uint32_t*, int);
 int (*WebPExtractAlpha)(const uint8_t*, int, int, int, uint8_t*, int);
+void (*WebPExtractGreen)(const uint32_t* argb, uint8_t* alpha, int size);
 
 //------------------------------------------------------------------------------
 // Init function
 
+extern void WebPInitAlphaProcessingMIPSdspR2(void);
 extern void WebPInitAlphaProcessingSSE2(void);
+extern void WebPInitAlphaProcessingSSE41(void);
+extern void WebPInitAlphaProcessingNEON(void);
 
 static volatile VP8CPUInfo alpha_processing_last_cpuinfo_used =
     (VP8CPUInfo)&alpha_processing_last_cpuinfo_used;
 
-void WebPInitAlphaProcessing(void) {
+WEBP_TSAN_IGNORE_FUNCTION void WebPInitAlphaProcessing(void) {
   if (alpha_processing_last_cpuinfo_used == VP8GetCPUInfo) return;
 
-  WebPMultARGBRow = MultARGBRow;
-  WebPMultRow = MultRow;
+  WebPMultARGBRow = WebPMultARGBRowC;
+  WebPMultRow = WebPMultRowC;
   WebPApplyAlphaMultiply = ApplyAlphaMultiply;
   WebPApplyAlphaMultiply4444 = ApplyAlphaMultiply_16b;
-  WebPExtractAlpha = ExtractAlpha;
+
+  WebPDispatchAlpha = DispatchAlpha_C;
+  WebPDispatchAlphaToGreen = DispatchAlphaToGreen_C;
+  WebPExtractAlpha = ExtractAlpha_C;
+  WebPExtractGreen = ExtractGreen_C;
 
   // If defined, use CPUInfo() to overwrite some pointers with faster versions.
   if (VP8GetCPUInfo != NULL) {
 #if defined(WEBP_USE_SSE2)
     if (VP8GetCPUInfo(kSSE2)) {
       WebPInitAlphaProcessingSSE2();
+#if defined(WEBP_USE_SSE41)
+      if (VP8GetCPUInfo(kSSE4_1)) {
+        WebPInitAlphaProcessingSSE41();
+      }
+#endif
+    }
+#endif
+#if defined(WEBP_USE_NEON)
+    if (VP8GetCPUInfo(kNEON)) {
+      WebPInitAlphaProcessingNEON();
+    }
+#endif
+#if defined(WEBP_USE_MIPS_DSP_R2)
+    if (VP8GetCPUInfo(kMIPSdspR2)) {
+      WebPInitAlphaProcessingMIPSdspR2();
     }
 #endif
   }
