@@ -139,6 +139,15 @@
     <ClCompile Include="src\jutils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\jpegtran.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rdcolmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\transupp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\jconfig.h">
@@ -166,6 +175,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\jversion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cdjpeg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cderror.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\transupp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
