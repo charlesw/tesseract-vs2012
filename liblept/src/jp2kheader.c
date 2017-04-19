@@ -24,8 +24,9 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-/*
- *  jp2kheader.c
+/*!
+ * \file jp2kheader.c
+ * <pre>
  *
  *      Read header
  *          l_int32          readHeaderJp2k()
@@ -38,11 +39,16 @@
  *
  *  To read and write jp2k data, using the OpenJPEG library
  *  (http://www.openjpeg.org), see jpegio.c.
+ * </pre>
  */
 
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
+
+#ifndef  NO_CONSOLE_IO
+#define  DEBUG_IHDR        0
+#endif  /* ~NO_CONSOLE_IO */
 
 /* --------------------------------------------*/
 #if  USE_JP2KHEADER   /* defined in environ.h */
@@ -56,14 +62,14 @@ static const l_int32  MAX_JP2K_HEIGHT = 100000;
  *                          Stream interface                          *
  *--------------------------------------------------------------------*/
 /*!
- *  readHeaderJp2k()
+ * \brief   readHeaderJp2k()
  *
- *      Input:  filename
- *              &w (<optional return>)
- *              &h (<optional return>)
- *              &bps (<optional return>, bits/sample)
- *              &spp (<optional return>, samples/pixel)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    filename
+ * \param[out]   pw [optional]
+ *           [out]   ph ([optional]
+ *           [out]   pbps ([optional]  bits/sample
+ * \param[out]   pspp [optional]  samples/pixel
+ * \return  0 if OK, 1 on error
  */
 l_int32
 readHeaderJp2k(const char *filename,
@@ -93,14 +99,14 @@ FILE    *fp;
 
 
 /*!
- *  freadHeaderJp2k()
+ * \brief   freadHeaderJp2k()
  *
- *      Input:  stream opened for read
- *              &w (<optional return>)
- *              &h (<optional return>)
- *              &bps (<optional return>, bits/sample)
- *              &spp (<optional return>, samples/pixel)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    fp file stream opened for read
+ * \param[out]   pw [optional]
+ *           [out]   ph ([optional]
+ *           [out]   pbps ([optional]  bits/sample
+ * \param[out]   pspp [optional]  samples/pixel
+ * \return  0 if OK, 1 on error
  */
 l_int32
 freadHeaderJp2k(FILE     *fp,
@@ -133,17 +139,18 @@ l_int32  nread;
 
 
 /*!
- *  readHeaderMemJp2k()
+ * \brief   readHeaderMemJp2k()
  *
- *      Input:  data
- *              size (at least 80)
- *              &w (<optional return>)
- *              &h (<optional return>)
- *              &bps (<optional return>, bits/sample)
- *              &spp (<optional return>, samples/pixel)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    data
+ * \param[in]    size at least 80
+ * \param[out]   pw [optional]
+ *           [out]   ph ([optional]
+ *           [out]   pbps ([optional]  bits/sample
+ * \param[out]   pspp [optional]  samples/pixel
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) The ISO/IEC reference for jpeg2000 is
  *               http://www.jpeg.org/public/15444-1annexi.pdf
  *          and the file format syntax begins at page 127.
@@ -154,6 +161,7 @@ l_int32  nread;
  *               w:    4 bytes
  *               spp:  2 bytes
  *               bps:  1 byte   (contains bps - 1)
+ * </pre>
  */
 l_int32
 readHeaderMemJp2k(const l_uint8  *data,
@@ -184,8 +192,10 @@ l_uint8  ihdr[4] = {0x69, 0x68, 0x64, 0x72};  /* 'ihdr' */
     arrayFindSequence(data, size, ihdr, 4, &loc, &found);
     if (!found)
         return ERROR_INT("image parameters not found", procName, 1);
+#if  DEBUG_IHDR
     if (loc != 44)
         L_INFO("Beginning of ihdr is at byte %d\n", procName, loc);
+#endif  /* DEBUG_IHDR */
 
     windex = loc / 4 + 1;
     val = *((l_uint32 *)data + windex);
@@ -208,9 +218,9 @@ l_uint8  ihdr[4] = {0x69, 0x68, 0x64, 0x72};  /* 'ihdr' */
 /*
  *  fgetJp2kResolution()
  *
- *      Input:  stream (opened for read)
+ *      Input:  fp (file stream opened for read)
  *              &xres, &yres (<return> resolution in ppi)
- *      Return: 0 if OK; 1 on error
+ *      Return: 0 if found; 1 if not found or on error
  *
  *  Notes:
  *      (1) If the capture resolution field is not set, this is not an error;
@@ -256,8 +266,8 @@ l_float64  xres, yres;
     arrayFindSequence(data, nbytes, resc, 4, &loc, &found);
     if (!found) {
         L_WARNING("image resolution not found\n", procName);
-        FREE(data);
-        return 0;
+        LEPT_FREE(data);
+        return 1;
     }
 
         /* Extract the fields and calculate the resolution in pixels/meter.
@@ -281,10 +291,9 @@ l_float64  xres, yres;
     *pyres = (l_int32)(yres + 0.5);
     *pxres = (l_int32)(xres + 0.5);
 
-    FREE(data);
+    LEPT_FREE(data);
     return 0;
 }
 
 /* --------------------------------------------*/
 #endif  /* USE_JP2KHEADER */
-/* --------------------------------------------*/

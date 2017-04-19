@@ -122,9 +122,6 @@
     <ClCompile Include="src\convolve.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\convolvelow.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\correlscore.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -201,9 +198,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\graymorph.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graymorphlow.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\grayquant.c">
@@ -434,9 +428,6 @@
     <ClCompile Include="src\runlength.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sarray.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\scale.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -482,12 +473,6 @@
     <ClCompile Include="src\tiffiostub.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\viewfiles.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\warper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -503,13 +488,55 @@
     <ClCompile Include="src\writefile.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\xtractprotos.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\zlibmem.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\zlibmemstub.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bootnumgen1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bootnumgen2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bootnumgen3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\encoding.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\map.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ptafunc2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rbtree.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stringcode.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dnafunc1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dnahash.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sarray1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sarray2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\strokes.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils2.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -598,5 +625,20 @@
     <ClInclude Include="include\watershed.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\bmfdata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\stringcode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rbtree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="liblept.rc" />
   </ItemGroup>
 </Project>

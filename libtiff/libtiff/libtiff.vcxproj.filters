@@ -158,9 +158,24 @@
     <ClCompile Include="src\tif_zip.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\tif_lzma.c" />
-    <ClCompile Include="src\tif_jpeg_12.c" />
-    <ClCompile Include="src\mkg3states.c" />
+    <ClCompile Include="src\mkg3states.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tif_jpeg_12.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tif_lzma.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\getopt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\snprintf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\strcasecmp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="include\tiffconf.h.in">

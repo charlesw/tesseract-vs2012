@@ -24,11 +24,38 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-#ifndef  LEPTONICA_FREETYPE_H
-#define  LEPTONICA_FREETYPE_H
+/*
+--- *   autogen.*.h
+ *
+ *   Automatically generated function prototype and associated
+ *   encoded serialized strings.
+ */
 
-#define  LEPTONICA_FT_RESOLUTION 96
+--- #ifndef  LEPTONICA_AUTOGEN_*_H
+--- #define  LEPTONICA_AUTOGEN_*_H
 
-typedef struct ft_library_st FT_LIBRARY;
+/*---------------------------------------------------------------------*/
+/*                         Function prototype                          */
+/*---------------------------------------------------------------------*/
 
-#endif  /* LEPTONICA_FREETYPE_H */
+#ifdef __cplusplus
+extern "C" {
+#endif  /* __cplusplus */
+
+--- void *l_autodecode_*(l_int32  index);
+
+#ifdef __cplusplus
+}
+#endif  /* __cplusplus */
+
+/*---------------------------------------------------------------------*/
+/*                         Serialized strings                          */
+/*---------------------------------------------------------------------*/
+--- static const char *l_strdata_0 =
+---     "...";
+--- static const char *l_strdata_1 =
+---     "...";
+---   [etc]
+---
+---#endif  /* LEPTONICA_AUTOGEN_*_H */
+

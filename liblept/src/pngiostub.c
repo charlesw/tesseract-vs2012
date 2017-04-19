@@ -24,17 +24,19 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-/*
- *  pngiostub.c
+/*!
+ * \file pngiostub.c
+ * <pre>
  *
  *     Stubs for pngio.c functions
+ * </pre>
  */
-
-#include "allheaders.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif  /* HAVE_CONFIG_H */
+
+#include "allheaders.h"
 
 /* --------------------------------------------*/
 #if  !HAVE_LIBPNG   /* defined in environ.h */
@@ -82,6 +84,13 @@ l_int32 fgetPngResolution(FILE *fp, l_int32 *pxres, l_int32 *pyres)
 l_int32 isPngInterlaced(const char *filename, l_int32 *pinterlaced)
 {
     return ERROR_INT("function not present", "isPngInterlaced", 1);
+}
+
+/* ----------------------------------------------------------------------*/
+
+l_int32 fgetPngColormapInfo(FILE *fp, PIXCMAP **pcmap, l_int32 *ptransparency)
+{
+    return ERROR_INT("function not present", "fgetPngColormapInfo", 1);
 }
 
 /* ----------------------------------------------------------------------*/

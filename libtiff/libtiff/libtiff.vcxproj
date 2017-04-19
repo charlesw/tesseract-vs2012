@@ -106,8 +106,9 @@
     </Link>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>libport.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\port;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -125,8 +126,9 @@
     </Link>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>libport.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\port;C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -185,6 +187,9 @@
     <ClInclude Include="include\uvcode.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\getopt.c" />
+    <ClCompile Include="src\snprintf.c" />
+    <ClCompile Include="src\strcasecmp.c" />
     <ClCompile Include="src\tif_aux.c" />
     <ClCompile Include="src\tif_close.c" />
     <ClCompile Include="src\tif_codec.c" />

@@ -24,17 +24,19 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-/*
- *  webpiostub.c
+/*!
+ * \file webpiostub.c
+ * <pre>
  *
  *     Stubs for webpio.c functions
+ * </pre>
  */
-
-#include "allheaders.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif  /* HAVE_CONFIG_H */
+
+#include "allheaders.h"
 
 /* --------------------------------------------*/
 #if  !HAVE_LIBWEBP   /* defined in environ.h */

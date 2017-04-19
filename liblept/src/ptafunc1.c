@@ -25,21 +25,17 @@
  *====================================================================*/
 
 
-/*
- *   ptafunc1.c
+/*!
+ * \file  ptafunc1.c
+ * <pre>
  *
- *      Pta and Ptaa rearrangements
+ *      Simple rearrangements
  *           PTA      *ptaSubsample()
  *           l_int32   ptaJoin()
  *           l_int32   ptaaJoin()
  *           PTA      *ptaReverse()
  *           PTA      *ptaTranspose()
  *           PTA      *ptaCyclicPerm()
- *           PTA      *ptaSort()
- *           l_int32   ptaGetSortIndex()
- *           PTA      *ptaSortByIndex()
- *           PTA      *ptaRemoveDuplicates()
- *           PTAA     *ptaaSortByIndex()
  *
  *      Geometric
  *           BOX      *ptaGetBoundingRegion()
@@ -51,6 +47,11 @@
  *           PTA      *ptaTransform()
  *           l_int32   ptaPtInsidePolygon()
  *           l_float32 l_angleBetweenVectors()
+ *
+ *      Min/max and filtering
+ *           l_int32   ptaGetMinMax()
+ *           PTA      *ptaSelectByValue()
+ *           PTA      *ptaCropToMask()
  *
  *      Least Squares Fit
  *           l_int32   ptaGetLinearLSF()
@@ -70,6 +71,8 @@
  *           PIX      *pixGenerateFromPta()
  *           PTA      *ptaGetBoundaryPixels()
  *           PTAA     *ptaaGetBoundaryPixels()
+ *           PTAA     *ptaaIndexLabelledPixels()
+ *           PTA      *ptaGetNeighborPixLocs()
  *
  *      Display Pta and Ptaa
  *           PIX      *pixDisplayPta()
@@ -77,6 +80,7 @@
  *           PIX      *pixDisplayPtaPattern()
  *           PTA      *ptaReplicatePattern()
  *           PIX      *pixDisplayPtaa()
+ * </pre>
  */
 
 #include <math.h>
@@ -86,19 +90,16 @@
 #define M_PI 3.14159265358979323846
 #endif  /* M_PI */
 
-    /* Default spreading factor for hashing pts in a plane */
-static const l_int32  DEFAULT_SPREADING_FACTOR = 7500;
-
 
 /*---------------------------------------------------------------------*
- *                           Pta rearrangements                        *
+ *                        Simple rearrangements                        *
  *---------------------------------------------------------------------*/
 /*!
- *  ptaSubsample()
+ * \brief   ptaSubsample()
  *
- *      Input:  ptas
- *              subfactor (subsample factor, >= 1)
- *      Return: ptad (evenly sampled pt values from ptas, or null on error
+ * \param[in]    ptas
+ * \param[in]    subfactor subsample factor, >= 1
+ * \return  ptad evenly sampled pt values from ptas, or NULL on error
  */
 PTA *
 ptaSubsample(PTA     *ptas,
@@ -128,18 +129,20 @@ PTA       *ptad;
 
 
 /*!
- *  ptaJoin()
+ * \brief   ptaJoin()
  *
- *      Input:  ptad  (dest pta; add to this one)
- *              ptas  (source pta; add from this one)
- *              istart  (starting index in ptas)
- *              iend  (ending index in ptas; use -1 to cat all)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    ptad  dest pta; add to this one
+ * \param[in]    ptas  source pta; add from this one
+ * \param[in]    istart  starting index in ptas
+ * \param[in]    iend  ending index in ptas; use -1 to cat all
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) istart < 0 is taken to mean 'read from the start' (istart = 0)
  *      (2) iend < 0 means 'read to the end'
  *      (3) if ptas == NULL, this is a no-op
+ * </pre>
  */
 l_int32
 ptaJoin(PTA     *ptad,
@@ -174,18 +177,20 @@ l_int32  n, i, x, y;
 
 
 /*!
- *  ptaaJoin()
+ * \brief   ptaaJoin()
  *
- *      Input:  ptaad  (dest ptaa; add to this one)
- *              ptaas  (source ptaa; add from this one)
- *              istart  (starting index in ptaas)
- *              iend  (ending index in ptaas; use -1 to cat all)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    ptaad  dest ptaa; add to this one
+ * \param[in]    ptaas  source ptaa; add from this one
+ * \param[in]    istart  starting index in ptaas
+ * \param[in]    iend  ending index in ptaas; use -1 to cat all
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) istart < 0 is taken to mean 'read from the start' (istart = 0)
  *      (2) iend < 0 means 'read to the end'
  *      (3) if ptas == NULL, this is a no-op
+ * </pre>
  */
 l_int32
 ptaaJoin(PTAA    *ptaad,
@@ -221,11 +226,11 @@ PTA     *pta;
 
 
 /*!
- *  ptaReverse()
+ * \brief   ptaReverse()
  *
- *      Input:  ptas
- *              type  (0 for float values; 1 for integer values)
- *      Return: ptad (reversed pta), or null on error
+ * \param[in]    ptas
+ * \param[in]    type  0 for float values; 1 for integer values
+ * \return  ptad reversed pta, or NULL on error
  */
 PTA  *
 ptaReverse(PTA     *ptas,
@@ -258,10 +263,10 @@ PTA       *ptad;
 
 
 /*!
- *  ptaTranspose()
+ * \brief   ptaTranspose()
  *
- *      Input:  ptas
- *      Return: ptad (with x and y values swapped), or null on error
+ * \param[in]    ptas
+ * \return  ptad with x and y values swapped, or NULL on error
  */
 PTA  *
 ptaTranspose(PTA  *ptas)
@@ -288,18 +293,20 @@ PTA       *ptad;
 
 
 /*!
- *  ptaCyclicPerm()
+ * \brief   ptaCyclicPerm()
  *
- *      Input:  ptas
- *              xs, ys  (start point; must be in ptas)
- *      Return: ptad (cyclic permutation, starting and ending at (xs, ys),
- *              or null on error
+ * \param[in]    ptas
+ * \param[in]    xs, ys  start point; must be in ptas
+ * \return  ptad cyclic permutation, starting and ending at (xs, ys,
+ *              or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Check to insure that (a) ptas is a closed path where
  *          the first and last points are identical, and (b) the
  *          resulting pta also starts and ends on the same point
  *          (which in this case is (xs, ys).
+ * </pre>
  */
 PTA  *
 ptaCyclicPerm(PTA     *ptas,
@@ -349,263 +356,21 @@ PTA     *ptad;
 }
 
 
-/*!
- *  ptaSort()
- *
- *      Input:  ptas
- *              sorttype (L_SORT_BY_X, L_SORT_BY_Y)
- *              sortorder  (L_SORT_INCREASING, L_SORT_DECREASING)
- *              &naindex (<optional return> index of sorted order into
- *                        original array)
- *      Return: ptad (sorted version of ptas), or null on error
- */
-PTA *
-ptaSort(PTA     *ptas,
-        l_int32  sorttype,
-        l_int32  sortorder,
-        NUMA   **pnaindex)
-{
-PTA   *ptad;
-NUMA  *naindex;
-
-    PROCNAME("ptaSort");
-
-    if (pnaindex) *pnaindex = NULL;
-    if (!ptas)
-        return (PTA *)ERROR_PTR("ptas not defined", procName, NULL);
-    if (sorttype != L_SORT_BY_X && sorttype != L_SORT_BY_Y)
-        return (PTA *)ERROR_PTR("invalid sort type", procName, NULL);
-    if (sortorder != L_SORT_INCREASING && sortorder != L_SORT_DECREASING)
-        return (PTA *)ERROR_PTR("invalid sort order", procName, NULL);
-
-    if (ptaGetSortIndex(ptas, sorttype, sortorder, &naindex) != 0)
-        return (PTA *)ERROR_PTR("naindex not made", procName, NULL);
-
-    ptad = ptaSortByIndex(ptas, naindex);
-    if (pnaindex)
-        *pnaindex = naindex;
-    else
-        numaDestroy(&naindex);
-    if (!ptad)
-        return (PTA *)ERROR_PTR("ptad not made", procName, NULL);
-    return ptad;
-}
-
-
-/*!
- *  ptaGetSortIndex()
- *
- *      Input:  ptas
- *              sorttype (L_SORT_BY_X, L_SORT_BY_Y)
- *              sortorder  (L_SORT_INCREASING, L_SORT_DECREASING)
- *              &naindex (<return> index of sorted order into
- *                        original array)
- *      Return: 0 if OK, 1 on error
- */
-l_int32
-ptaGetSortIndex(PTA     *ptas,
-                l_int32  sorttype,
-                l_int32  sortorder,
-                NUMA   **pnaindex)
-{
-l_int32    i, n;
-l_float32  x, y;
-NUMA      *na;
-
-    PROCNAME("ptaGetSortIndex");
-
-    if (!pnaindex)
-        return ERROR_INT("&naindex not defined", procName, 1);
-    *pnaindex = NULL;
-    if (!ptas)
-        return ERROR_INT("ptas not defined", procName, 1);
-    if (sorttype != L_SORT_BY_X && sorttype != L_SORT_BY_Y)
-        return ERROR_INT("invalid sort type", procName, 1);
-    if (sortorder != L_SORT_INCREASING && sortorder != L_SORT_DECREASING)
-        return ERROR_INT("invalid sort order", procName, 1);
-
-        /* Build up numa of specific data */
-    n = ptaGetCount(ptas);
-    if ((na = numaCreate(n)) == NULL)
-        return ERROR_INT("na not made", procName, 1);
-    for (i = 0; i < n; i++) {
-        ptaGetPt(ptas, i, &x, &y);
-        if (sorttype == L_SORT_BY_X)
-            numaAddNumber(na, x);
-        else
-            numaAddNumber(na, y);
-    }
-
-        /* Get the sort index for data array */
-    *pnaindex = numaGetSortIndex(na, sortorder);
-    numaDestroy(&na);
-    if (!*pnaindex)
-        return ERROR_INT("naindex not made", procName, 1);
-    return 0;
-}
-
-
-/*!
- *  ptaSortByIndex()
- *
- *      Input:  ptas
- *              naindex (na that maps from the new pta to the input pta)
- *      Return: ptad (sorted), or null on  error
- */
-PTA *
-ptaSortByIndex(PTA   *ptas,
-               NUMA  *naindex)
-{
-l_int32    i, index, n;
-l_float32  x, y;
-PTA       *ptad;
-
-    PROCNAME("ptaSortByIndex");
-
-    if (!ptas)
-        return (PTA *)ERROR_PTR("ptas not defined", procName, NULL);
-    if (!naindex)
-        return (PTA *)ERROR_PTR("naindex not defined", procName, NULL);
-
-        /* Build up sorted pta using sort index */
-    n = numaGetCount(naindex);
-    if ((ptad = ptaCreate(n)) == NULL)
-        return (PTA *)ERROR_PTR("ptad not made", procName, NULL);
-    for (i = 0; i < n; i++) {
-        numaGetIValue(naindex, i, &index);
-        ptaGetPt(ptas, index, &x, &y);
-        ptaAddPt(ptad, x, y);
-    }
-
-    return ptad;
-}
-
-
-/*!
- *  ptaRemoveDuplicates()
- *
- *      Input:  ptas (assumed to be integer values)
- *              factor (should be larger than the largest point value;
- *                      use 0 for default)
- *      Return: ptad (with duplicates removed), or null on error
- */
-PTA *
-ptaRemoveDuplicates(PTA      *ptas,
-                    l_uint32  factor)
-{
-l_int32    nsize, i, j, k, index, n, nvals;
-l_int32    x, y, xk, yk;
-l_int32   *ia;
-PTA       *ptad;
-NUMA      *na;
-NUMAHASH  *nahash;
-
-    PROCNAME("ptaRemoveDuplicates");
-
-    if (!ptas)
-        return (PTA *)ERROR_PTR("ptas not defined", procName, NULL);
-    if (factor == 0)
-        factor = DEFAULT_SPREADING_FACTOR;
-
-        /* Build up numaHash of indices, hashed by a key that is
-         * a large linear combination of x and y values designed to
-         * randomize the key. */
-    nsize = 5507;  /* buckets in hash table; prime */
-    nahash = numaHashCreate(nsize, 2);
-    n = ptaGetCount(ptas);
-    for (i = 0; i < n; i++) {
-        ptaGetIPt(ptas, i, &x, &y);
-        numaHashAdd(nahash, factor * x + y, (l_float32)i);
-    }
-
-    if ((ptad = ptaCreate(n)) == NULL)
-        return (PTA *)ERROR_PTR("ptad not made", procName, NULL);
-    for (i = 0; i < nsize; i++) {
-        na = numaHashGetNuma(nahash, i);
-        if (!na) continue;
-
-        nvals = numaGetCount(na);
-            /* If more than 1 pt, compare exhaustively with double loop;
-             * otherwise, just enter it. */
-        if (nvals > 1) {
-            if ((ia = (l_int32 *)CALLOC(nvals, sizeof(l_int32))) == NULL)
-                return (PTA *)ERROR_PTR("ia not made", procName, NULL);
-            for (j = 0; j < nvals; j++) {
-                if (ia[j] == 1) continue;
-                numaGetIValue(na, j, &index);
-                ptaGetIPt(ptas, index, &x, &y);
-                ptaAddPt(ptad, x, y);
-                for (k = j + 1; k < nvals; k++) {
-                    if (ia[k] == 1) continue;
-                    numaGetIValue(na, k, &index);
-                    ptaGetIPt(ptas, index, &xk, &yk);
-                    if (x == xk && y == yk)  /* duplicate */
-                        ia[k] = 1;
-                }
-            }
-            FREE(ia);
-        } else {
-            numaGetIValue(na, 0, &index);
-            ptaGetIPt(ptas, index, &x, &y);
-            ptaAddPt(ptad, x, y);
-        }
-        numaDestroy(&na);  /* the clone */
-    }
-
-    numaHashDestroy(&nahash);
-    return ptad;
-}
-
-
-/*!
- *  ptaaSortByIndex()
- *
- *      Input:  ptaas
- *              naindex (na that maps from the new ptaa to the input ptaa)
- *      Return: ptaad (sorted), or null on error
- */
-PTAA *
-ptaaSortByIndex(PTAA  *ptaas,
-                NUMA  *naindex)
-{
-l_int32  i, n, index;
-PTA     *pta;
-PTAA    *ptaad;
-
-    PROCNAME("ptaaSortByIndex");
-
-    if (!ptaas)
-        return (PTAA *)ERROR_PTR("ptaas not defined", procName, NULL);
-    if (!naindex)
-        return (PTAA *)ERROR_PTR("naindex not defined", procName, NULL);
-
-    n = ptaaGetCount(ptaas);
-    if (numaGetCount(naindex) != n)
-        return (PTAA *)ERROR_PTR("numa and ptaa sizes differ", procName, NULL);
-    ptaad = ptaaCreate(n);
-    for (i = 0; i < n; i++) {
-        numaGetIValue(naindex, i, &index);
-        pta = ptaaGetPta(ptaas, index, L_COPY);
-        ptaaAddPta(ptaad, pta, L_INSERT);
-    }
-
-    return ptaad;
-}
-
-
 /*---------------------------------------------------------------------*
  *                               Geometric                             *
  *---------------------------------------------------------------------*/
 /*!
- *  ptaGetBoundingRegion()
+ * \brief   ptaGetBoundingRegion()
  *
- *      Input:  pta
- *      Return: box, or null on error
+ * \param[in]    pta
+ * \return  box, or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This is used when the pta represents a set of points in
  *          a two-dimensional image.  It returns the box of minimum
  *          size containing the pts in the pta.
+ * </pre>
  */
 BOX *
 ptaGetBoundingRegion(PTA  *pta)
@@ -635,19 +400,21 @@ l_int32  n, i, x, y, minx, maxx, miny, maxy;
 
 
 /*!
- *  ptaGetRange()
+ * \brief   ptaGetRange()
  *
- *      Input:  pta
- *              &minx (<optional return> min value of x)
- *              &maxx (<optional return> max value of x)
- *              &miny (<optional return> min value of y)
- *              &maxy (<optional return> max value of y)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    pta
+ * \param[out]   pminx [optional] min value of x
+ * \param[out]   pmaxx [optional] max value of x
+ * \param[out]   pminy [optional] min value of y
+ * \param[out]   pmaxy [optional] max value of y
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) We can use pts to represent pairs of floating values, that
  *          are not necessarily tied to a two-dimension region.  For
  *          example, the pts can represent a general function y(x).
+ * </pre>
  */
 l_int32
 ptaGetRange(PTA        *pta,
@@ -693,11 +460,11 @@ l_float32  x, y, minx, maxx, miny, maxy;
 
 
 /*!
- *  ptaGetInsideBox()
+ * \brief   ptaGetInsideBox()
  *
- *      Input:  ptas (input pts)
- *              box
- *      Return: ptad (of pts in ptas that are inside the box), or null on error
+ * \param[in]    ptas input pts
+ * \param[in]    box
+ * \return  ptad of pts in ptas that are inside the box, or NULL on error
  */
 PTA *
 ptaGetInsideBox(PTA  *ptas,
@@ -728,14 +495,16 @@ l_float32  x, y;
 
 
 /*!
- *  pixFindCornerPixels()
+ * \brief   pixFindCornerPixels()
  *
- *      Input:  pixs (1 bpp)
- *      Return: pta, or null on error
+ * \param[in]    pixs 1 bpp
+ * \return  pta, or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Finds the 4 corner-most pixels, as defined by a search
  *          inward from each corner, using a 45 degree line.
+ * </pre>
  */
 PTA *
 pixFindCornerPixels(PIX  *pixs)
@@ -823,11 +592,11 @@ PTA       *pta;
 
 
 /*!
- *  ptaContainsPt()
+ * \brief   ptaContainsPt()
  *
- *      Input:  pta
- *              x, y  (point)
- *      Return: 1 if contained, 0 otherwise or on error
+ * \param[in]    pta
+ * \param[in]    x, y  point
+ * \return  1 if contained, 0 otherwise or on error
  */
 l_int32
 ptaContainsPt(PTA     *pta,
@@ -852,10 +621,10 @@ l_int32  i, n, ix, iy;
 
 
 /*!
- *  ptaTestIntersection()
+ * \brief   ptaTestIntersection()
  *
- *      Input:  pta1, pta2
- *      Return: bval which is 1 if they have any elements in common;
+ * \param[in]    pta1, pta2
+ * \return  bval which is 1 if they have any elements in common;
  *              0 otherwise or on error.
  */
 l_int32
@@ -887,15 +656,17 @@ l_int32  i, j, n1, n2, x1, y1, x2, y2;
 
 
 /*!
- *  ptaTransform()
+ * \brief   ptaTransform()
  *
- *      Input:  pta
- *              shiftx, shifty
- *              scalex, scaley
- *      Return: pta, or null on error
+ * \param[in]    ptas
+ * \param[in]    shiftx, shifty
+ * \param[in]    scalex, scaley
+ * \return  pta, or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Shift first, then scale.
+ * </pre>
  */
 PTA *
 ptaTransform(PTA       *ptas,
@@ -925,12 +696,12 @@ PTA     *ptad;
 
 
 /*!
- *  ptaPtInsidePolygon()
+ * \brief   ptaPtInsidePolygon()
  *
- *      Input:  pta (vertices of a polygon)
- *              x, y (point to be tested)
- *              &inside (<return> 1 if inside; 0 if outside or on boundary)
- *      Return: 1 if OK, 0 on error
+ * \param[in]    pta vertices of a polygon
+ * \param[in]    x, y point to be tested
+ * \param[out]   pinside 1 if inside; 0 if outside or on boundary
+ * \return  1 if OK, 0 on error
  *
  *  The abs value of the sum of the angles subtended from a point by
  *  the sides of a polygon, when taken in order traversing the polygon,
@@ -975,17 +746,19 @@ l_float32  sum, x1, y1, x2, y2, xp1, yp1, xp2, yp2;
 
 
 /*!
- *  l_angleBetweenVectors()
+ * \brief   l_angleBetweenVectors()
  *
- *      Input:  x1, y1 (end point of first vector)
- *              x2, y2 (end point of second vector)
- *      Return: angle (radians), or 0.0 on error
+ * \param[in]    x1, y1 end point of first vector
+ * \param[in]    x2, y2 end point of second vector
+ * \return  angle radians, or 0.0 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This gives the angle between two vectors, going between
  *          vector1 (x1,y1) and vector2 (x2,y2).  The angle is swept
  *          out from 1 --> 2.  If this is clockwise, the angle is
  *          positive, but the result is folded into the interval [-pi, pi].
+ * </pre>
  */
 l_float32
 l_angleBetweenVectors(l_float32  x1,
@@ -1003,18 +776,185 @@ l_float64  ang;
 
 
 /*---------------------------------------------------------------------*
+ *                       Min/max and filtering                         *
+ *---------------------------------------------------------------------*/
+/*!
+ * \brief   ptaGetMinMax()
+ *
+ * \param[in]    pta
+ * \param[out]   pxmin  [optional] min of x
+ * \param[out]   pymin  [optional] min of y
+ * \param[out]   pxmax  [optional] max of x
+ * \param[out]   pymax  [optional] max of y
+ * \return  0 if OK, 1 on error.  If pta is empty, requested
+ *              values are returned as -1.0.
+ */
+l_int32
+ptaGetMinMax(PTA        *pta,
+             l_float32  *pxmin,
+             l_float32  *pymin,
+             l_float32  *pxmax,
+             l_float32  *pymax)
+{
+l_int32    i, n;
+l_float32  x, y, xmin, ymin, xmax, ymax;
+
+    PROCNAME("ptaGetMinMax");
+
+    if (pxmin) *pxmin = -1.0;
+    if (pymin) *pymin = -1.0;
+    if (pxmax) *pxmax = -1.0;
+    if (pymax) *pymax = -1.0;
+    if (!pta)
+        return ERROR_INT("pta not defined", procName, 1);
+    if (!pxmin && !pxmax && !pymin && !pymax)
+        return ERROR_INT("no output requested", procName, 1);
+    if ((n = ptaGetCount(pta)) == 0) {
+        L_WARNING("pta is empty\n", procName);
+        return 0;
+    }
+
+    xmin = ymin = 1.0e20;
+    xmax = ymax = -1.0e20;
+    for (i = 0; i < n; i++) {
+        ptaGetPt(pta, i, &x, &y);
+        if (x < xmin) xmin = x;
+        if (y < ymin) ymin = y;
+        if (x > xmax) xmax = x;
+        if (y > ymax) ymax = y;
+    }
+    if (pxmin) *pxmin = xmin;
+    if (pymin) *pymin = ymin;
+    if (pxmax) *pxmax = xmax;
+    if (pymax) *pymax = ymax;
+    return 0;
+}
+
+
+/*!
+ * \brief   ptaSelectByValue()
+ *
+ * \param[in]    ptas
+ * \param[in]    xth, yth threshold values
+ * \param[in]    type L_SELECT_XVAL, L_SELECT_YVAL,
+ *                    L_SELECT_IF_EITHER, L_SELECT_IF_BOTH
+ * \param[in]    relation L_SELECT_IF_LT, L_SELECT_IF_GT,
+ *                        L_SELECT_IF_LTE, L_SELECT_IF_GTE
+ * \return  ptad filtered set, or NULL on error
+ */
+PTA *
+ptaSelectByValue(PTA       *ptas,
+                 l_float32  xth,
+                 l_float32  yth,
+                 l_int32    type,
+                 l_int32    relation)
+{
+l_int32    i, n;
+l_float32  x, y;
+PTA       *ptad;
+
+    PROCNAME("ptaSelectByValue");
+
+    if (!ptas)
+        return (PTA *)ERROR_PTR("ptas not defined", procName, NULL);
+    if (ptaGetCount(ptas) == 0) {
+        L_WARNING("ptas is empty\n", procName);
+        return ptaCopy(ptas);
+    }
+    if (type != L_SELECT_XVAL && type != L_SELECT_YVAL &&
+        type != L_SELECT_IF_EITHER && type != L_SELECT_IF_BOTH)
+        return (PTA *)ERROR_PTR("invalid type", procName, NULL);
+    if (relation != L_SELECT_IF_LT && relation != L_SELECT_IF_GT &&
+        relation != L_SELECT_IF_LTE && relation != L_SELECT_IF_GTE)
+        return (PTA *)ERROR_PTR("invalid relation", procName, NULL);
+
+    n = ptaGetCount(ptas);
+    ptad = ptaCreate(n);
+    for (i = 0; i < n; i++) {
+        ptaGetPt(ptas, i, &x, &y);
+        if (type == L_SELECT_XVAL) {
+            if ((relation == L_SELECT_IF_LT && x < xth) ||
+                (relation == L_SELECT_IF_GT && x > xth) ||
+                (relation == L_SELECT_IF_LTE && x <= xth) ||
+                (relation == L_SELECT_IF_GTE && x >= xth))
+                ptaAddPt(ptad, x, y);
+        } else if (type == L_SELECT_YVAL) {
+            if ((relation == L_SELECT_IF_LT && y < yth) ||
+                (relation == L_SELECT_IF_GT && y > yth) ||
+                (relation == L_SELECT_IF_LTE && y <= yth) ||
+                (relation == L_SELECT_IF_GTE && y >= yth))
+                ptaAddPt(ptad, x, y);
+        } else if (type == L_SELECT_IF_EITHER) {
+            if (((relation == L_SELECT_IF_LT) && (x < xth || y < yth)) ||
+                ((relation == L_SELECT_IF_GT) && (x > xth || y > yth)) ||
+                ((relation == L_SELECT_IF_LTE) && (x <= xth || y <= yth)) ||
+                ((relation == L_SELECT_IF_GTE) && (x >= xth || y >= yth)))
+                ptaAddPt(ptad, x, y);
+        } else {  /* L_SELECT_IF_BOTH */
+            if (((relation == L_SELECT_IF_LT) && (x < xth && y < yth)) ||
+                ((relation == L_SELECT_IF_GT) && (x > xth && y > yth)) ||
+                ((relation == L_SELECT_IF_LTE) && (x <= xth && y <= yth)) ||
+                ((relation == L_SELECT_IF_GTE) && (x >= xth && y >= yth)))
+                ptaAddPt(ptad, x, y);
+        }
+    }
+
+    return ptad;
+}
+
+
+/*!
+ * \brief   ptaCropToMask()
+ *
+ * \param[in]    ptas  input pta
+ * \param[in]    pixm  1 bpp mask
+ * \return  ptad  with only pts under the mask fg, or NULL on error
+ */
+PTA *
+ptaCropToMask(PTA  *ptas,
+              PIX  *pixm)
+{
+l_int32   i, n, x, y;
+l_uint32  val;
+PTA      *ptad;
+
+    PROCNAME("ptaCropToMask");
+
+    if (!ptas)
+        return (PTA *)ERROR_PTR("ptas not defined", procName, NULL);
+    if (!pixm || pixGetDepth(pixm) != 1)
+        return (PTA *)ERROR_PTR("pixm undefined or not 1 bpp", procName, NULL);
+    if (ptaGetCount(ptas) == 0) {
+        L_INFO("ptas is empty\n", procName);
+        return ptaCopy(ptas);
+    }
+
+    n = ptaGetCount(ptas);
+    ptad = ptaCreate(n);
+    for (i = 0; i < n; i++) {
+        ptaGetIPt(ptas, i, &x, &y);
+        pixGetPixel(pixm, x, y, &val);
+        if (val == 1)
+            ptaAddPt(ptad, x, y);
+    }
+    return ptad;
+}
+
+
+/*---------------------------------------------------------------------*
  *                            Least Squares Fit                        *
  *---------------------------------------------------------------------*/
 /*!
- *  ptaGetLinearLSF()
+ * \brief   ptaGetLinearLSF()
  *
- *      Input:  pta
- *              &a  (<optional return> slope a of least square fit: y = ax + b)
- *              &b  (<optional return> intercept b of least square fit)
- *              &nafit (<optional return> numa of least square fit)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    pta
+ * \param[out]   pa  [optional] slope a of least square fit: y = ax + b
+ * \param[out]   pb  [optional] intercept b of least square fit
+ * \param[out]   pnafit [optional] numa of least square fit
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Either or both &a and &b must be input.  They determine the
  *          type of line that is fit.
  *      (2) If both &a and &b are defined, this returns a and b that minimize:
@@ -1030,10 +970,11 @@ l_float64  ang;
  *               goes through the origin (b = 0).
  *           (b) If &b is given and &a = null, find the linear LSF with
  *               zero slope (a = 0).
- *      (4) If @nafit is defined, this returns an array of fitted values,
+ *      (4) If %nafit is defined, this returns an array of fitted values,
  *          corresponding to the two implicit Numa arrays (nax and nay) in pta.
  *          Thus, just as you can plot the data in pta as nay vs. nax,
  *          you can plot the linear least square fit as nafit vs. nax.
+ * </pre>
  */
 l_int32
 ptaGetLinearLSF(PTA        *pta,
@@ -1102,18 +1043,19 @@ l_float32  *xa, *ya;
 
 
 /*!
- *  ptaGetQuadraticLSF()
+ * \brief   ptaGetQuadraticLSF()
  *
- *      Input:  pta
- *              &a  (<optional return> coeff a of LSF: y = ax^2 + bx + c)
- *              &b  (<optional return> coeff b of LSF: y = ax^2 + bx + c)
- *              &c  (<optional return> coeff c of LSF: y = ax^2 + bx + c)
- *              &nafit (<optional return> numa of least square fit)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    pta
+ * \param[out]   pa  [optional] coeff a of LSF: y = ax^2 + bx + c
+ * \param[out]   pb  [optional] coeff b of LSF: y = ax^2 + bx + c
+ * \param[out]   pc  [optional] coeff c of LSF: y = ax^2 + bx + c
+ * \param[out]   pnafit [optional] numa of least square fit
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This does a quadratic least square fit to the set of points
- *          in @pta.  That is, it finds coefficients a, b and c that minimize:
+ *          in %pta.  That is, it finds coefficients a, b and c that minimize:
  *
  *              sum (yi - a*xi*xi -b*xi -c)^2
  *               i
@@ -1125,10 +1067,11 @@ l_float32  *xa, *ya;
  *             f[0][0]a + f[0][1]b + f[0][2]c = g[0]
  *             f[1][0]a + f[1][1]b + f[1][2]c = g[1]
  *             f[2][0]a + f[2][1]b + f[2][2]c = g[2]
- *      (2) If @nafit is defined, this returns an array of fitted values,
+ *      (2) If %nafit is defined, this returns an array of fitted values,
  *          corresponding to the two implicit Numa arrays (nax and nay) in pta.
  *          Thus, just as you can plot the data in pta as nay vs. nax,
  *          you can plot the linear least square fit as nafit vs. nax.
+ * </pre>
  */
 l_int32
 ptaGetQuadraticLSF(PTA        *pta,
@@ -1174,7 +1117,7 @@ NUMA       *nafit;
     }
 
     for (i = 0; i < 3; i++)
-        f[i] = (l_float32 *)CALLOC(3, sizeof(l_float32));
+        f[i] = (l_float32 *)LEPT_CALLOC(3, sizeof(l_float32));
     f[0][0] = sx4;
     f[0][1] = sx3;
     f[0][2] = sx2;
@@ -1191,7 +1134,7 @@ NUMA       *nafit;
         /* Solve for the unknowns, also putting f-inverse into f */
     ret = gaussjordan(f, g, 3);
     for (i = 0; i < 3; i++)
-        FREE(f[i]);
+        LEPT_FREE(f[i]);
     if (ret)
         return ERROR_INT("quadratic solution failed", procName, 1);
 
@@ -1213,19 +1156,20 @@ NUMA       *nafit;
 
 
 /*!
- *  ptaGetCubicLSF()
+ * \brief   ptaGetCubicLSF()
  *
- *      Input:  pta
- *              &a  (<optional return> coeff a of LSF: y = ax^3 + bx^2 + cx + d)
- *              &b  (<optional return> coeff b of LSF)
- *              &c  (<optional return> coeff c of LSF)
- *              &d  (<optional return> coeff d of LSF)
- *              &nafit (<optional return> numa of least square fit)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    pta
+ * \param[out]   pa  [optional] coeff a of LSF: y = ax^3 + bx^2 + cx + d
+ * \param[out]   pb  [optional] coeff b of LSF
+ * \param[out]   pc  [optional] coeff c of LSF
+ * \param[out]   pd  [optional] coeff d of LSF
+ * \param[out]   pnafit [optional] numa of least square fit
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This does a cubic least square fit to the set of points
- *          in @pta.  That is, it finds coefficients a, b, c and d
+ *          in %pta.  That is, it finds coefficients a, b, c and d
  *          that minimize:
  *
  *              sum (yi - a*xi*xi*xi -b*xi*xi -c*xi - d)^2
@@ -1239,10 +1183,11 @@ NUMA       *nafit;
  *             f[1][0]a + f[1][1]b + f[1][2]c + f[1][3] = g[1]
  *             f[2][0]a + f[2][1]b + f[2][2]c + f[2][3] = g[2]
  *             f[3][0]a + f[3][1]b + f[3][2]c + f[3][3] = g[3]
- *      (2) If @nafit is defined, this returns an array of fitted values,
+ *      (2) If %nafit is defined, this returns an array of fitted values,
  *          corresponding to the two implicit Numa arrays (nax and nay) in pta.
  *          Thus, just as you can plot the data in pta as nay vs. nax,
  *          you can plot the linear least square fit as nafit vs. nax.
+ * </pre>
  */
 l_int32
 ptaGetCubicLSF(PTA        *pta,
@@ -1293,7 +1238,7 @@ NUMA       *nafit;
     }
 
     for (i = 0; i < 4; i++)
-        f[i] = (l_float32 *)CALLOC(4, sizeof(l_float32));
+        f[i] = (l_float32 *)LEPT_CALLOC(4, sizeof(l_float32));
     f[0][0] = sx6;
     f[0][1] = sx5;
     f[0][2] = sx4;
@@ -1318,7 +1263,7 @@ NUMA       *nafit;
         /* Solve for the unknowns, also putting f-inverse into f */
     ret = gaussjordan(f, g, 4);
     for (i = 0; i < 4; i++)
-        FREE(f[i]);
+        LEPT_FREE(f[i]);
     if (ret)
         return ERROR_INT("cubic solution failed", procName, 1);
 
@@ -1341,21 +1286,22 @@ NUMA       *nafit;
 
 
 /*!
- *  ptaGetQuarticLSF()
+ * \brief   ptaGetQuarticLSF()
  *
- *      Input:  pta
- *              &a  (<optional return> coeff a of LSF:
- *                        y = ax^4 + bx^3 + cx^2 + dx + e)
- *              &b  (<optional return> coeff b of LSF)
- *              &c  (<optional return> coeff c of LSF)
- *              &d  (<optional return> coeff d of LSF)
- *              &e  (<optional return> coeff e of LSF)
- *              &nafit (<optional return> numa of least square fit)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    pta
+ * \param[out]   pa  [optional] coeff a of LSF:
+ *                        y = ax^4 + bx^3 + cx^2 + dx + e
+ * \param[out]   pb  [optional] coeff b of LSF
+ * \param[out]   pc  [optional] coeff c of LSF
+ * \param[out]   pd  [optional] coeff d of LSF
+ * \param[out]   pe  [optional] coeff e of LSF
+ * \param[out]   pnafit [optional] numa of least square fit
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This does a quartic least square fit to the set of points
- *          in @pta.  That is, it finds coefficients a, b, c, d and 3
+ *          in %pta.  That is, it finds coefficients a, b, c, d and 3
  *          that minimize:
  *
  *              sum (yi - a*xi*xi*xi*xi -b*xi*xi*xi -c*xi*xi - d*xi - e)^2
@@ -1370,10 +1316,11 @@ NUMA       *nafit;
  *             f[2][0]a + f[2][1]b + f[2][2]c + f[2][3] + f[2][4] = g[2]
  *             f[3][0]a + f[3][1]b + f[3][2]c + f[3][3] + f[3][4] = g[3]
  *             f[4][0]a + f[4][1]b + f[4][2]c + f[4][3] + f[4][4] = g[4]
- *      (2) If @nafit is defined, this returns an array of fitted values,
+ *      (2) If %nafit is defined, this returns an array of fitted values,
  *          corresponding to the two implicit Numa arrays (nax and nay) in pta.
  *          Thus, just as you can plot the data in pta as nay vs. nax,
  *          you can plot the linear least square fit as nafit vs. nax.
+ * </pre>
  */
 l_int32
 ptaGetQuarticLSF(PTA        *pta,
@@ -1431,7 +1378,7 @@ NUMA       *nafit;
     }
 
     for (i = 0; i < 5; i++)
-        f[i] = (l_float32 *)CALLOC(5, sizeof(l_float32));
+        f[i] = (l_float32 *)LEPT_CALLOC(5, sizeof(l_float32));
     f[0][0] = sx8;
     f[0][1] = sx7;
     f[0][2] = sx6;
@@ -1466,7 +1413,7 @@ NUMA       *nafit;
         /* Solve for the unknowns, also putting f-inverse into f */
     ret = gaussjordan(f, g, 5);
     for (i = 0; i < 5; i++)
-        FREE(f[i]);
+        LEPT_FREE(f[i]);
     if (ret)
         return ERROR_INT("quartic solution failed", procName, 1);
 
@@ -1491,27 +1438,29 @@ NUMA       *nafit;
 
 
 /*!
- *  ptaNoisyLinearLSF()
+ * \brief   ptaNoisyLinearLSF()
  *
- *      Input:  pta
- *              factor (reject outliers with error greater than this
- *                      number of medians; typically ~ 3)
- *              &ptad (<optional return> with outliers removed)
- *              &a  (<optional return> slope a of least square fit: y = ax + b)
- *              &b  (<optional return> intercept b of least square fit)
- *              &mederr (<optional return> median error)
- *              &nafit (<optional return> numa of least square fit to ptad)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    pta
+ * \param[in]    factor reject outliers with error greater than this
+ *                      number of medians; typically ~ 3
+ * \param[out]   pptad [optional] with outliers removed
+ * \param[out]   pa  [optional] slope a of least square fit: y = ax + b
+ * \param[out]   pb  [optional] intercept b of least square fit
+ * \param[out]   pmederr [optional] median error
+ * \param[out]   pnafit [optional] numa of least square fit to ptad
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This does a linear least square fit to the set of points
- *          in @pta.  It then evaluates the errors and removes points
+ *          in %pta.  It then evaluates the errors and removes points
  *          whose error is >= factor * median_error.  It then re-runs
  *          the linear LSF on the resulting points.
  *      (2) Either or both &a and &b must be input.  They determine the
  *          type of line that is fit.
  *      (3) The median error can give an indication of how good the fit
  *          is likely to be.
+ * </pre>
  */
 l_int32
 ptaNoisyLinearLSF(PTA        *pta,
@@ -1579,24 +1528,26 @@ PTA       *ptad;
 
 
 /*!
- *  ptaNoisyQuadraticLSF()
+ * \brief   ptaNoisyQuadraticLSF()
  *
- *      Input:  pta
- *              factor (reject outliers with error greater than this
- *                      number of medians; typically ~ 3)
- *              &ptad (<optional return> with outliers removed)
- *              &a  (<optional return> coeff a of LSF: y = ax^2 + bx + c)
- *              &b  (<optional return> coeff b of LSF: y = ax^2 + bx + c)
- *              &c  (<optional return> coeff c of LSF: y = ax^2 + bx + c)
- *              &mederr (<optional return> median error)
- *              &nafit (<optional return> numa of least square fit to ptad)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    pta
+ * \param[in]    factor reject outliers with error greater than this
+ *                      number of medians; typically ~ 3
+ * \param[out]   pptad [optional] with outliers removed
+ * \param[out]   pa  [optional] coeff a of LSF: y = ax^2 + bx + c
+ * \param[out]   pb  [optional] coeff b of LSF: y = ax^2 + bx + c
+ * \param[out]   pc  [optional] coeff c of LSF: y = ax^2 + bx + c
+ * \param[out]   pmederr [optional] median error
+ * \param[out]   pnafit [optional] numa of least square fit to ptad
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This does a quadratic least square fit to the set of points
- *          in @pta.  It then evaluates the errors and removes points
+ *          in %pta.  It then evaluates the errors and removes points
  *          whose error is >= factor * median_error.  It then re-runs
  *          a quadratic LSF on the resulting points.
+ * </pre>
  */
 l_int32
 ptaNoisyQuadraticLSF(PTA        *pta,
@@ -1671,12 +1622,12 @@ PTA       *ptad;
 
 
 /*!
- *  applyLinearFit()
+ * \brief   applyLinearFit()
  *
- *      Input: a, b (linear fit coefficients)
- *             x
- *             &y (<return> y = a * x + b)
- *      Return: 0 if OK, 1 on error
+ * \param[in]   a, b linear fit coefficients
+ * \param[in]   x
+ * \param[out]  py y = a * x + b
+ * \return  0 if OK, 1 on error
  */
 l_int32
 applyLinearFit(l_float32   a,
@@ -1695,12 +1646,12 @@ applyLinearFit(l_float32   a,
 
 
 /*!
- *  applyQuadraticFit()
+ * \brief   applyQuadraticFit()
  *
- *      Input: a, b, c (quadratic fit coefficients)
- *             x
- *             &y (<return> y = a * x^2 + b * x + c)
- *      Return: 0 if OK, 1 on error
+ * \param[in]   a, b, c quadratic fit coefficients
+ * \param[in]   x
+ * \param[out]  py y = a * x^2 + b * x + c
+ * \return  0 if OK, 1 on error
  */
 l_int32
 applyQuadraticFit(l_float32   a,
@@ -1720,12 +1671,12 @@ applyQuadraticFit(l_float32   a,
 
 
 /*!
- *  applyCubicFit()
+ * \brief   applyCubicFit()
  *
- *      Input: a, b, c, d (cubic fit coefficients)
- *             x
- *             &y (<return> y = a * x^3 + b * x^2  + c * x + d)
- *      Return: 0 if OK, 1 on error
+ * \param[in]   a, b, c, d cubic fit coefficients
+ * \param[in]   x
+ * \param[out]  py y = a * x^3 + b * x^2  + c * x + d
+ * \return  0 if OK, 1 on error
  */
 l_int32
 applyCubicFit(l_float32   a,
@@ -1746,12 +1697,12 @@ applyCubicFit(l_float32   a,
 
 
 /*!
- *  applyQuarticFit()
+ * \brief   applyQuarticFit()
  *
- *      Input: a, b, c, d, e (quartic fit coefficients)
- *             x
- *             &y (<return> y = a * x^4 + b * x^3  + c * x^2 + d * x + e)
- *      Return: 0 if OK, 1 on error
+ * \param[in]   a, b, c, d, e quartic fit coefficients
+ * \param[in]   x
+ * \param[out]  py y = a * x^4 + b * x^3  + c * x^2 + d * x + e
+ * \return  0 if OK, 1 on error
  */
 l_int32
 applyQuarticFit(l_float32   a,
@@ -1779,20 +1730,20 @@ l_float32  x2;
  *                        Interconversions with Pix                    *
  *---------------------------------------------------------------------*/
 /*!
- *  pixPlotAlongPta()
+ * \brief   pixPlotAlongPta()
  *
- *      Input: pixs (any depth)
- *             pta (set of points on which to plot)
- *             outformat (GPLOT_PNG, GPLOT_PS, GPLOT_EPS, GPLOT_X11,
- *                        GPLOT_LATEX)
- *             title (<optional> for plot; can be null)
- *      Return: 0 if OK, 1 on error
+ * \param[in]   pixs any depth
+ * \param[in]   pta set of points on which to plot
+ * \param[in]   outformat GPLOT_PNG, GPLOT_PS, GPLOT_EPS, GPLOT_LATEX
+ * \param[in]   title [optional] for plot; can be null
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
- *      (1) We remove any existing colormap and clip the pta to the input pixs.
- *      (2) This is a debugging function, and does not remove temporary
- *          plotting files that it generates.
+ * <pre>
+ * Notes:
+ *      (1) This is a debugging function.
+ *      (2) Removes existing colormaps and clips the pta to the input %pixs.
  *      (3) If the image is RGB, three separate plots are generated.
+ * </pre>
  */
 l_int32
 pixPlotAlongPta(PIX         *pixs,
@@ -1810,13 +1761,14 @@ PIX            *pixt;
 
     PROCNAME("pixPlotAlongPta");
 
+    lept_mkdir("lept/plot");
+
     if (!pixs)
         return ERROR_INT("pixs not defined", procName, 1);
     if (!pta)
         return ERROR_INT("pta not defined", procName, 1);
     if (outformat != GPLOT_PNG && outformat != GPLOT_PS &&
-        outformat != GPLOT_EPS && outformat != GPLOT_X11 &&
-        outformat != GPLOT_LATEX) {
+        outformat != GPLOT_EPS && outformat != GPLOT_LATEX) {
         L_WARNING("outformat invalid; using GPLOT_PNG\n", procName);
         outformat = GPLOT_PNG;
     }
@@ -1845,21 +1797,21 @@ PIX            *pixt;
             numaAddNumber(nab, bval);
         }
 
-        sprintf(buffer, "/tmp/junkplot.%d", count++);
+        snprintf(buffer, sizeof(buffer), "/tmp/lept/plot/%03d", count++);
         rtitle = stringJoin("Red: ", title);
         gplotSimple1(nar, outformat, buffer, rtitle);
-        sprintf(buffer, "/tmp/junkplot.%d", count++);
+        snprintf(buffer, sizeof(buffer), "/tmp/lept/plot/%03d", count++);
         gtitle = stringJoin("Green: ", title);
         gplotSimple1(nag, outformat, buffer, gtitle);
-        sprintf(buffer, "/tmp/junkplot.%d", count++);
+        snprintf(buffer, sizeof(buffer), "/tmp/lept/plot/%03d", count++);
         btitle = stringJoin("Blue: ", title);
         gplotSimple1(nab, outformat, buffer, btitle);
         numaDestroy(&nar);
         numaDestroy(&nag);
         numaDestroy(&nab);
-        FREE(rtitle);
-        FREE(gtitle);
-        FREE(btitle);
+        LEPT_FREE(rtitle);
+        LEPT_FREE(gtitle);
+        LEPT_FREE(btitle);
     } else {
         na = numaCreate(npts);
         for (i = 0; i < npts; i++) {
@@ -1872,7 +1824,7 @@ PIX            *pixt;
             numaAddNumber(na, (l_float32)val);
         }
 
-        sprintf(buffer, "/tmp/junkplot.%d", count++);
+        snprintf(buffer, sizeof(buffer), "/tmp/lept/plot/%03d", count++);
         gplotSimple1(na, outformat, buffer, title);
         numaDestroy(&na);
     }
@@ -1882,15 +1834,17 @@ PIX            *pixt;
 
 
 /*!
- *  ptaGetPixelsFromPix()
+ * \brief   ptaGetPixelsFromPix()
  *
- *      Input:  pixs (1 bpp)
- *              box (<optional> can be null)
- *      Return: pta, or null on error
+ * \param[in]    pixs 1 bpp
+ * \param[in]    box [optional] can be null
+ * \return  pta, or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Generates a pta of fg pixels in the pix, within the box.
  *          If box == NULL, it uses the entire pix.
+ * </pre>
  */
 PTA *
 ptaGetPixelsFromPix(PIX  *pixs,
@@ -1932,16 +1886,18 @@ PTA       *pta;
 
 
 /*!
- *  pixGenerateFromPta()
+ * \brief   pixGenerateFromPta()
  *
- *      Input:  pta
- *              w, h (of pix)
- *      Return: pix (1 bpp), or null on error
+ * \param[in]    pta
+ * \param[in]    w, h of pix
+ * \return  pix 1 bpp, or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Points are rounded to nearest ints.
  *      (2) Any points outside (w,h) are silently discarded.
  *      (3) Output 1 bpp pix has values 1 for each point in the pta.
+ * </pre>
  */
 PIX *
 pixGenerateFromPta(PTA     *pta,
@@ -1971,14 +1927,18 @@ PIX     *pix;
 
 
 /*!
- *  ptaGetBoundaryPixels()
+ * \brief   ptaGetBoundaryPixels()
  *
- *      Input:  pixs (1 bpp)
- *              type (L_BOUNDARY_FG, L_BOUNDARY_BG)
- *      Return: pta, or null on error
+ * \param[in]    pixs 1 bpp
+ * \param[in]    type L_BOUNDARY_FG, L_BOUNDARY_BG
+ * \return  pta, or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This generates a pta of either fg or bg boundary pixels.
+ *      (2) See also pixGeneratePtaBoundary() for rendering of
+ *          fg boundary pixels.
+ * </pre>
  */
 PTA *
 ptaGetBoundaryPixels(PIX     *pixs,
@@ -2007,16 +1967,17 @@ PTA  *pta;
 
 
 /*!
- *  ptaaGetBoundaryPixels()
+ * \brief   ptaaGetBoundaryPixels()
  *
- *      Input:  pixs (1 bpp)
- *              type (L_BOUNDARY_FG, L_BOUNDARY_BG)
- *              connectivity (4 or 8)
- *              &boxa (<optional return> bounding boxes of the c.c.)
- *              &pixa (<optional return> pixa of the c.c.)
- *      Return: ptaa, or null on error
+ * \param[in]    pixs 1 bpp
+ * \param[in]    type L_BOUNDARY_FG, L_BOUNDARY_BG
+ * \param[in]    connectivity 4 or 8
+ * \param[out]   pboxa [optional] bounding boxes of the c.c.
+ * \param[out]   ppixa [optional] pixa of the c.c.
+ * \return  ptaa, or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This generates a ptaa of either fg or bg boundary pixels,
  *          where each pta has the boundary pixels for a connected
  *          component.
@@ -2026,6 +1987,7 @@ PTA  *pta;
  *          dilate or erode each component separately.  Note also that
  *          special handling is required for bg pixels when the
  *          component touches the pix boundary.
+ * </pre>
  */
 PTAA *
 ptaaGetBoundaryPixels(PIX     *pixs,
@@ -2089,18 +2051,144 @@ PTAA    *ptaa;
 }
 
 
+/*!
+ * \brief   ptaaIndexLabelledPixels()
+ *
+ * \param[in]    pixs 32 bpp, of indices of c.c.
+ * \param[out]   pncc [optional] number of connected components
+ * \return  ptaa, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) The pixel values in %pixs are the index of the connected component
+ *          to which the pixel belongs; %pixs is typically generated from
+ *          a 1 bpp pix by pixConnCompTransform().  Background pixels in
+ *          the generating 1 bpp pix are represented in %pixs by 0.
+ *          We do not check that the pixel values are correctly labelled.
+ *      (2) Each pta in the returned ptaa gives the pixel locations
+ *          correspnding to a connected component, with the label of each
+ *          given by the index of the pta into the ptaa.
+ *      (3) Initialize with the first pta in ptaa being empty and
+ *          representing the background value (index 0) in the pix.
+ * </pre>
+ */
+PTAA *
+ptaaIndexLabelledPixels(PIX      *pixs,
+                        l_int32  *pncc)
+{
+l_int32    wpl, index, i, j, w, h;
+l_uint32   maxval;
+l_uint32  *data, *line;
+PTA       *pta;
+PTAA      *ptaa;
+
+    PROCNAME("ptaaIndexLabelledPixels");
+
+    if (pncc) *pncc = 0;
+    if (!pixs || (pixGetDepth(pixs) != 32))
+        return (PTAA *)ERROR_PTR("pixs undef or not 32 bpp", procName, NULL);
+
+        /* The number of c.c. is the maximum pixel value.  Use this to
+         * initialize ptaa with sufficient pta arrays */
+    pixGetMaxValueInRect(pixs, NULL, &maxval, NULL, NULL);
+    if (pncc) *pncc = maxval;
+    pta = ptaCreate(1);
+    ptaa = ptaaCreate(maxval + 1);
+    ptaaInitFull(ptaa, pta);
+    ptaDestroy(&pta);
+
+        /* Sweep over %pixs, saving the pixel coordinates of each pixel
+         * with nonzero value in the appropriate pta, indexed by that value. */
+    pixGetDimensions(pixs, &w, &h, NULL);
+    data = pixGetData(pixs);
+    wpl = pixGetWpl(pixs);
+    for (i = 0; i < h; i++) {
+        line = data + wpl * i;
+        for (j = 0; j < w; j++) {
+            index = line[j];
+            if (index > 0)
+                ptaaAddPt(ptaa, index, j, i);
+        }
+    }
+
+    return ptaa;
+}
+
+
+/*!
+ * \brief   ptaGetNeighborPixLocs()
+ *
+ * \param[in]    pixs any depth
+ * \param[in]    x, y pixel from which we search for nearest neighbors
+ *              conn (4 or 8 connectivity
+ * \return  pta, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) Generates a pta of all valid neighbor pixel locations,
+ *          or NULL on error.
+ * </pre>
+ */
+PTA *
+ptaGetNeighborPixLocs(PIX  *pixs,
+                      l_int32  x,
+                      l_int32  y,
+                      l_int32  conn)
+{
+l_int32  w, h;
+PTA     *pta;
+
+    PROCNAME("ptaGetNeighborPixLocs");
+
+    if (!pixs)
+        return (PTA *)ERROR_PTR("pixs not defined", procName, NULL);
+    pixGetDimensions(pixs, &w, &h, NULL);
+    if (x < 0 || x >= w || y < 0 || y >= h)
+        return (PTA *)ERROR_PTR("(x,y) not in pixs", procName, NULL);
+    if (conn != 4 && conn != 8)
+        return (PTA *)ERROR_PTR("conn not 4 or 8", procName, NULL);
+
+    pta = ptaCreate(conn);
+    if (x > 0)
+        ptaAddPt(pta, x - 1, y);
+    if (x < w - 1)
+        ptaAddPt(pta, x + 1, y);
+    if (y > 0)
+        ptaAddPt(pta, x, y - 1);
+    if (y < h - 1)
+        ptaAddPt(pta, x, y + 1);
+    if (conn == 8) {
+        if (x > 0) {
+            if (y > 0)
+                ptaAddPt(pta, x - 1, y - 1);
+            if (y < h - 1)
+                ptaAddPt(pta, x - 1, y + 1);
+        }
+        if (x < w - 1) {
+            if (y > 0)
+                ptaAddPt(pta, x + 1, y - 1);
+            if (y < h - 1)
+                ptaAddPt(pta, x + 1, y + 1);
+        }
+    }
+
+    return pta;
+}
+
+
 /*---------------------------------------------------------------------*
  *                          Display Pta and Ptaa                       *
  *---------------------------------------------------------------------*/
 /*!
- *  pixDisplayPta()
+ * \brief   pixDisplayPta()
  *
- *      Input:  pixd (can be same as pixs or null; 32 bpp if in-place)
- *              pixs (1, 2, 4, 8, 16 or 32 bpp)
- *              pta (of path to be plotted)
- *      Return: pixd (32 bpp RGB version of pixs, with path in green).
+ * \param[in]    pixd can be same as pixs or NULL; 32 bpp if in-place
+ * \param[in]    pixs 1, 2, 4, 8, 16 or 32 bpp
+ * \param[in]    pta of path to be plotted
+ * \return  pixd 32 bpp RGB version of pixs, with path in green.
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) To write on an existing pixs, pixs must be 32 bpp and
  *          call with pixd == pixs:
  *             pixDisplayPta(pixs, pixs, pta);
@@ -2108,6 +2196,7 @@ PTAA    *ptaa;
  *             pixd = pixDisplayPta(NULL, pixs, pta);
  *      (2) On error, returns pixd to avoid losing pixs if called as
  *             pixs = pixDisplayPta(pixs, pixs, pta);
+ * </pre>
  */
 PIX *
 pixDisplayPta(PIX  *pixd,
@@ -2151,17 +2240,18 @@ l_uint32  rpixel, gpixel, bpixel;
 
 
 /*!
- *  pixDisplayPtaaPattern()
+ * \brief   pixDisplayPtaaPattern()
  *
- *      Input:  pixd (32 bpp)
- *              pixs (1, 2, 4, 8, 16 or 32 bpp; 32 bpp if in place)
- *              ptaa (giving locations at which the pattern is displayed)
- *              pixp (1 bpp pattern to be placed such that its reference
- *                    point co-locates with each point in pta)
- *              cx, cy (reference point in pattern)
- *      Return: pixd (32 bpp RGB version of pixs).
+ * \param[in]    pixd 32 bpp
+ * \param[in]    pixs 1, 2, 4, 8, 16 or 32 bpp; 32 bpp if in place
+ * \param[in]    ptaa giving locations at which the pattern is displayed
+ * \param[in]    pixp 1 bpp pattern to be placed such that its reference
+ *                    point co-locates with each point in pta
+ * \param[in]    cx, cy reference point in pattern
+ * \return  pixd 32 bpp RGB version of pixs.
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) To write on an existing pixs, pixs must be 32 bpp and
  *          call with pixd == pixs:
  *             pixDisplayPtaPattern(pixs, pixs, pta, ...);
@@ -2172,6 +2262,7 @@ l_uint32  rpixel, gpixel, bpixel;
  *             pixs = pixDisplayPtaPattern(pixs, pixs, pta, ...);
  *      (4) A typical pattern to be used is a circle, generated with
  *             generatePtaFilledCircle()
+ * </pre>
  */
 PIX *
 pixDisplayPtaaPattern(PIX      *pixd,
@@ -2216,18 +2307,19 @@ PTA      *pta;
 
 
 /*!
- *  pixDisplayPtaPattern()
+ * \brief   pixDisplayPtaPattern()
  *
- *      Input:  pixd (can be same as pixs or null; 32 bpp if in-place)
- *              pixs (1, 2, 4, 8, 16 or 32 bpp)
- *              pta (giving locations at which the pattern is displayed)
- *              pixp (1 bpp pattern to be placed such that its reference
- *                    point co-locates with each point in pta)
- *              cx, cy (reference point in pattern)
- *              color (in 0xrrggbb00 format)
- *      Return: pixd (32 bpp RGB version of pixs).
+ * \param[in]    pixd can be same as pixs or NULL; 32 bpp if in-place
+ * \param[in]    pixs 1, 2, 4, 8, 16 or 32 bpp
+ * \param[in]    pta giving locations at which the pattern is displayed
+ * \param[in]    pixp 1 bpp pattern to be placed such that its reference
+ *                    point co-locates with each point in pta
+ * \param[in]    cx, cy reference point in pattern
+ * \param[in]    color in 0xrrggbb00 format
+ * \return  pixd 32 bpp RGB version of pixs.
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) To write on an existing pixs, pixs must be 32 bpp and
  *          call with pixd == pixs:
  *             pixDisplayPtaPattern(pixs, pixs, pta, ...);
@@ -2237,6 +2329,7 @@ PTA      *pta;
  *             pixs = pixDisplayPtaPattern(pixs, pixs, pta, ...);
  *      (3) A typical pattern to be used is a circle, generated with
  *             generatePtaFilledCircle()
+ * </pre>
  */
 PIX *
 pixDisplayPtaPattern(PIX      *pixd,
@@ -2280,21 +2373,23 @@ PTA     *ptat;
 
 
 /*!
- *  ptaReplicatePattern()
+ * \brief   ptaReplicatePattern()
  *
- *      Input:  ptas ("sparse" input pta)
- *              pixp (<optional> 1 bpp pattern, to be replicated in output pta)
- *              ptap (<optional> set of pts, to be replicated in output pta)
- *              cx, cy (reference point in pattern)
- *              w, h (clipping sizes for output pta)
- *      Return: ptad (with all points of replicated pattern), or null on error
+ * \param[in]    ptas "sparse" input pta
+ * \param[in]    pixp [optional] 1 bpp pattern, to be replicated in output pta
+ * \param[in]    ptap [optional] set of pts, to be replicated in output pta
+ * \param[in]    cx, cy reference point in pattern
+ * \param[in]    w, h clipping sizes for output pta
+ * \return  ptad with all points of replicated pattern, or NULL on error
  *
- *  Notes:
- *      (1) You can use either the image @pixp or the set of pts @ptap.
+ * <pre>
+ * Notes:
+ *      (1) You can use either the image %pixp or the set of pts %ptap.
  *      (2) The pattern is placed with its reference point at each point
  *          in ptas, and all the fg pixels are colleced into ptad.
- *          For @pixp, this is equivalent to blitting pixp at each point
+ *          For %pixp, this is equivalent to blitting pixp at each point
  *          in ptas, and then converting the resulting pix to a pta.
+ * </pre>
  */
 PTA *
 ptaReplicatePattern(PTA     *ptas,
@@ -2341,12 +2436,12 @@ PTA     *ptat, *ptad;
 
 
 /*!
- *  pixDisplayPtaa()
+ * \brief   pixDisplayPtaa()
  *
- *      Input:  pixs (1, 2, 4, 8, 16 or 32 bpp)
- *              ptaa (array of paths to be plotted)
- *      Return: pixd (32 bpp RGB version of pixs, with paths plotted
- *                    in different colors), or null on error
+ * \param[in]    pixs 1, 2, 4, 8, 16 or 32 bpp
+ * \param[in]    ptaa array of paths to be plotted
+ * \return  pixd 32 bpp RGB version of pixs, with paths plotted
+ *                    in different colors, or NULL on error
  */
 PIX *
 pixDisplayPtaa(PIX   *pixs,
@@ -2373,7 +2468,7 @@ PTA       *pta;
     pixGetDimensions(pixd, &w, &h, NULL);
 
         /* Make a colormap for the paths */
-    if ((pixela = (l_uint32 *)CALLOC(npta, sizeof(l_uint32))) == NULL)
+    if ((pixela = (l_uint32 *)LEPT_CALLOC(npta, sizeof(l_uint32))) == NULL)
         return (PIX *)ERROR_PTR("calloc fail for pixela", procName, NULL);
     na1 = numaPseudorandomSequence(256, 14657);
     na2 = numaPseudorandomSequence(256, 34631);
@@ -2400,6 +2495,6 @@ PTA       *pta;
         ptaDestroy(&pta);
     }
 
-    FREE(pixela);
+    LEPT_FREE(pixela);
     return pixd;
 }

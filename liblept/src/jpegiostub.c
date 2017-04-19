@@ -24,17 +24,19 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-/*
- *  jpegiostub.c
+/*!
+ * \file jpegiostub.c
+ * <pre>
  *
  *     Stubs for jpegio.c functions
+ * </pre>
  */
-
-#include "allheaders.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif  /* HAVE_CONFIG_H */
+
+#include "allheaders.h"
 
 /* --------------------------------------------*/
 #if  !HAVE_LIBJPEG   /* defined in environ.h */
