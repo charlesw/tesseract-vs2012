@@ -164,3 +164,4 @@ $RECYCLE.BIN/
 # Mac crap
 .DS_Store
 *.vcxproj.filters
+*.vcxproj.filters
