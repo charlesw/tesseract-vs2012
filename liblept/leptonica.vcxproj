@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>liblept-171</ProjectName>
+    <ProjectName>liblept-1741</ProjectName>
     <ProjectGuid>{1D7AB886-BECA-4A97-89CE-7381D3F5DE00}</ProjectGuid>
     <RootNamespace>liblept</RootNamespace>
     <Keyword>Win32Proj</Keyword>
@@ -164,7 +164,7 @@
     <ClCompile>
       <AdditionalOptions>/wd4244 /wd4305 /wd4018 /wd4267 /wd4996 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;..\libwebp\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_USRDLL;_WINDLL;LIBLEPT_EXPORTS;L_LITTLE_ENDIAN;XMD_H;NO_CONSOLE_IO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -173,7 +173,7 @@
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>zlib$(ZLIB_VERSION)-static-mtdll.lib;libpng$(LIBPNG_VERSION)-static-mtdll.lib;libjpeg$(LIBJPEG_VERSION)-static-mtdll.lib;libtiff$(LIBTIFF_VERSION)-static-mtdll.lib;giflib$(GIFLIB_VERSION)-static-mtdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib$(ZLIB_VERSION)-static-mtdll.lib;libpng$(LIBPNG_VERSION)-static-mtdll.lib;libjpeg$(LIBJPEG_VERSION)-static-mtdll.lib;libtiff$(LIBTIFF_VERSION)-static-mtdll.lib;giflib$(GIFLIB_VERSION)-static-mtdll.lib;libwebp$(LIBWEBP_VERSION)-static-mtdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>$(LIBLEPT_NUMBER)</Version>
       <LinkTimeCodeGeneration />
       <TargetMachine>MachineX86</TargetMachine>
@@ -198,7 +198,7 @@
     <ClCompile>
       <AdditionalOptions>/wd4244 /wd4305 /wd4018 /wd4267 /wd4996 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;..\libwebp\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_USRDLL;_WINDLL;LIBLEPT_EXPORTS;L_LITTLE_ENDIAN;XMD_H;NO_CONSOLE_IO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -223,6 +223,13 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DLL_Release|x64'">
     <CustomBuildStep>
@@ -234,7 +241,7 @@
     <ClCompile>
       <AdditionalOptions>/wd4244 /wd4305 /wd4018 /wd4267 /wd4996 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;..\libwebp\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_USRDLL;_WINDLL;LIBLEPT_EXPORTS;L_LITTLE_ENDIAN;XMD_H;NO_CONSOLE_IO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -244,7 +251,7 @@
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>zlib$(ZLIB_VERSION)-static-mtdll.lib;libpng$(LIBPNG_VERSION)-static-mtdll.lib;libjpeg$(LIBJPEG_VERSION)-static-mtdll.lib;libtiff$(LIBTIFF_VERSION)-static-mtdll.lib;giflib$(GIFLIB_VERSION)-static-mtdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib$(ZLIB_VERSION)-static-mtdll.lib;libpng$(LIBPNG_VERSION)-static-mtdll.lib;libjpeg$(LIBJPEG_VERSION)-static-mtdll.lib;libtiff$(LIBTIFF_VERSION)-static-mtdll.lib;giflib$(GIFLIB_VERSION)-static-mtdll.lib;libwebp$(LIBWEBP_VERSION)-static-mtdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>$(LIBLEPT_NUMBER)</Version>
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
@@ -269,7 +276,7 @@
     <ClCompile>
       <AdditionalOptions>/wd4244 /wd4305 /wd4018 /wd4267 /wd4996 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;..\libwebp\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_USRDLL;_WINDLL;LIBLEPT_EXPORTS;L_LITTLE_ENDIAN;XMD_H;NO_CONSOLE_IO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -293,6 +300,13 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <Lib>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DLL_Debug|Win32'">
     <CustomBuildStep>
@@ -302,7 +316,7 @@
     <ClCompile>
       <AdditionalOptions>/wd4244 /wd4305 /wd4018 /wd4267 /wd4996 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;..\libwebp\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_USRDLL;_WINDLL;LIBLEPT_EXPORTS;L_LITTLE_ENDIAN;XMD_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -314,7 +328,7 @@
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>zlib$(ZLIB_VERSION)-static-mtdll-debug.lib;giflib$(GIFLIB_VERSION)-static-mtdll-debug.lib;libpng$(LIBPNG_VERSION)-static-mtdll-debug.lib;libjpeg$(LIBJPEG_VERSION)-static-mtdll-debug.lib;libtiff$(LIBTIFF_VERSION)-static-mtdll-debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib$(ZLIB_VERSION)-static-mtdll-debug.lib;giflib$(GIFLIB_VERSION)-static-mtdll-debug.lib;libpng$(LIBPNG_VERSION)-static-mtdll-debug.lib;libjpeg$(LIBJPEG_VERSION)-static-mtdll-debug.lib;libtiff$(LIBTIFF_VERSION)-static-mtdll-debug.lib;libwebp$(LIBWEBP_VERSION)-static-mtdll-debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>$(LIBLEPT_NUMBER)</Version>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
@@ -338,7 +352,7 @@
     <ClCompile>
       <AdditionalOptions>/wd4244 /wd4305 /wd4018 /wd4267 /wd4996 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;..\libwebp\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_USRDLL;_WINDLL;LIBLEPT_EXPORTS;L_LITTLE_ENDIAN;XMD_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -375,7 +389,7 @@
     <ClCompile>
       <AdditionalOptions>/wd4244 /wd4305 /wd4018 /wd4267 /wd4996 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;..\libwebp\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_USRDLL;_WINDLL;LIBLEPT_EXPORTS;L_LITTLE_ENDIAN;XMD_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -388,7 +402,7 @@
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>zlib$(ZLIB_VERSION)-static-mtdll-debug.lib;giflib$(GIFLIB_VERSION)-static-mtdll-debug.lib;libpng$(LIBPNG_VERSION)-static-mtdll-debug.lib;libjpeg$(LIBJPEG_VERSION)-static-mtdll-debug.lib;libtiff$(LIBTIFF_VERSION)-static-mtdll-debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib$(ZLIB_VERSION)-static-mtdll-debug.lib;giflib$(GIFLIB_VERSION)-static-mtdll-debug.lib;libpng$(LIBPNG_VERSION)-static-mtdll-debug.lib;libjpeg$(LIBJPEG_VERSION)-static-mtdll-debug.lib;libtiff$(LIBTIFF_VERSION)-static-mtdll-debug.lib;libwebp$(LIBWEBP_VERSION)-static-mtdll-debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>$(LIBLEPT_NUMBER)</Version>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\build\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -411,7 +425,7 @@
     <ClCompile>
       <AdditionalOptions>/wd4244 /wd4305 /wd4018 /wd4267 /wd4996 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\include;..\giflib\include;..\zlib\include;..\libjpeg\include;..\libpng\include;..\libtiff\libtiff\include;..\libwebp\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_USRDLL;_WINDLL;LIBLEPT_EXPORTS;L_LITTLE_ENDIAN;XMD_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -454,6 +468,9 @@
     <ClCompile Include="src\bmf.c" />
     <ClCompile Include="src\bmpio.c" />
     <ClCompile Include="src\bmpiostub.c" />
+    <ClCompile Include="src\bootnumgen1.c" />
+    <ClCompile Include="src\bootnumgen2.c" />
+    <ClCompile Include="src\bootnumgen3.c" />
     <ClCompile Include="src\boxbasic.c" />
     <ClCompile Include="src\boxfunc1.c" />
     <ClCompile Include="src\boxfunc2.c" />
@@ -475,16 +492,18 @@
     <ClCompile Include="src\conncomp.c" />
     <ClCompile Include="src\convertfiles.c" />
     <ClCompile Include="src\convolve.c" />
-    <ClCompile Include="src\convolvelow.c" />
     <ClCompile Include="src\correlscore.c" />
     <ClCompile Include="src\dewarp1.c" />
     <ClCompile Include="src\dewarp2.c" />
     <ClCompile Include="src\dewarp3.c" />
     <ClCompile Include="src\dewarp4.c" />
     <ClCompile Include="src\dnabasic.c" />
+    <ClCompile Include="src\dnafunc1.c" />
+    <ClCompile Include="src\dnahash.c" />
     <ClCompile Include="src\dwacomb.2.c" />
     <ClCompile Include="src\dwacomblow.2.c" />
     <ClCompile Include="src\edge.c" />
+    <ClCompile Include="src\encoding.c" />
     <ClCompile Include="src\enhance.c" />
     <ClCompile Include="src\fhmtauto.c" />
     <ClCompile Include="src\fhmtgen.1.c" />
@@ -502,7 +521,6 @@
     <ClCompile Include="src\gplot.c" />
     <ClCompile Include="src\graphics.c" />
     <ClCompile Include="src\graymorph.c" />
-    <ClCompile Include="src\graymorphlow.c" />
     <ClCompile Include="src\grayquant.c" />
     <ClCompile Include="src\grayquantlow.c" />
     <ClCompile Include="src\heap.c" />
@@ -517,6 +535,7 @@
     <ClCompile Include="src\leptwin.c" />
     <ClCompile Include="src\libversions.c" />
     <ClCompile Include="src\list.c" />
+    <ClCompile Include="src\map.c" />
     <ClCompile Include="src\maze.c" />
     <ClCompile Include="src\morph.c" />
     <ClCompile Include="src\morphapp.c" />
@@ -559,10 +578,12 @@
     <ClCompile Include="src\psio2stub.c" />
     <ClCompile Include="src\ptabasic.c" />
     <ClCompile Include="src\ptafunc1.c" />
+    <ClCompile Include="src\ptafunc2.c" />
     <ClCompile Include="src\ptra.c" />
     <ClCompile Include="src\quadtree.c" />
     <ClCompile Include="src\queue.c" />
     <ClCompile Include="src\rank.c" />
+    <ClCompile Include="src\rbtree.c" />
     <ClCompile Include="src\readbarcode.c" />
     <ClCompile Include="src\readfile.c" />
     <ClCompile Include="src\recogbasic.c" />
@@ -579,7 +600,8 @@
     <ClCompile Include="src\rotateorth.c" />
     <ClCompile Include="src\rotateshear.c" />
     <ClCompile Include="src\runlength.c" />
-    <ClCompile Include="src\sarray.c" />
+    <ClCompile Include="src\sarray1.c" />
+    <ClCompile Include="src\sarray2.c" />
     <ClCompile Include="src\scale.c" />
     <ClCompile Include="src\scalelow.c" />
     <ClCompile Include="src\seedfill.c" />
@@ -591,18 +613,19 @@
     <ClCompile Include="src\skew.c" />
     <ClCompile Include="src\spixio.c" />
     <ClCompile Include="src\stack.c" />
+    <ClCompile Include="src\stringcode.c" />
+    <ClCompile Include="src\strokes.c" />
     <ClCompile Include="src\sudoku.c" />
     <ClCompile Include="src\textops.c" />
     <ClCompile Include="src\tiffio.c" />
     <ClCompile Include="src\tiffiostub.c" />
-    <ClCompile Include="src\utils.c" />
-    <ClCompile Include="src\viewfiles.c" />
+    <ClCompile Include="src\utils1.c" />
+    <ClCompile Include="src\utils2.c" />
     <ClCompile Include="src\warper.c" />
     <ClCompile Include="src\watershed.c" />
     <ClCompile Include="src\webpio.c" />
     <ClCompile Include="src\webpiostub.c" />
     <ClCompile Include="src\writefile.c" />
-    <ClCompile Include="src\xtractprotos.c" />
     <ClCompile Include="src\zlibmem.c" />
     <ClCompile Include="src\zlibmemstub.c" />
   </ItemGroup>
@@ -614,6 +637,7 @@
     <ClInclude Include="include\bbuffer.h" />
     <ClInclude Include="include\bilateral.h" />
     <ClInclude Include="include\bmf.h" />
+    <ClInclude Include="include\bmfdata.h" />
     <ClInclude Include="include\bmp.h" />
     <ClInclude Include="include\ccbord.h" />
     <ClInclude Include="include\dewarp.h" />
@@ -629,12 +653,21 @@
     <ClInclude Include="include\pix.h" />
     <ClInclude Include="include\ptra.h" />
     <ClInclude Include="include\queue.h" />
+    <ClInclude Include="include\rbtree.h" />
     <ClInclude Include="include\readbarcode.h" />
     <ClInclude Include="include\recog.h" />
     <ClInclude Include="include\regutils.h" />
     <ClInclude Include="include\stack.h" />
+    <ClInclude Include="include\stringcode.h" />
     <ClInclude Include="include\sudoku.h" />
     <ClInclude Include="include\watershed.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="liblept.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

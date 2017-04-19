@@ -8,6 +8,7 @@
     <LIBLEPT_NUMBER>1.71</LIBLEPT_NUMBER>
     <LIBPNG_VERSION>143</LIBPNG_VERSION>
     <LIBTIFF_VERSION>394</LIBTIFF_VERSION>
+    <LIBWEBP_VERSION>044</LIBWEBP_VERSION>
     <ZLIB_VERSION>128</ZLIB_VERSION>
   </PropertyGroup>
   <PropertyGroup>
@@ -34,6 +35,9 @@
     </BuildMacro>
     <BuildMacro Include="LIBTIFF_VERSION">
       <Value>$(LIBTIFF_VERSION)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LIBWEBP_VERSION">
+      <Value>$(LIBWEBP_VERSION)</Value>
     </BuildMacro>
     <BuildMacro Include="ZLIB_VERSION">
       <Value>$(ZLIB_VERSION)</Value>

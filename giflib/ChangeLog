@@ -1,8 +1,13 @@
+shipper: ignore this.
+	It's retained for archival purposes only, and because
+autotools throws a hissy fit if there isn't one.  The single point of
+truth about changes and the reasons for them is the repository.
+
 2007-11-10 14:50  abadger1999
 
 	* NEWS, configure.ac, lib/Makefile.am, lib/egif_lib.c,
-	  lib/gif_hash.c: 4.1.6 update.  Errors in including headers could
-	  lead to build problems on some platforms.
+	lib/gif_hash.c: 4.1.6 update.  Errors in including headers could
+	lead to build problems on some platforms.
 
 2007-11-10 13:16  abadger1999
 
@@ -196,7 +201,7 @@
         Last so that it won't break on unusually long comments.
       - EGifPutExtension{First,Next,Last}: Changed fwrites to WRITE so any
         user defined write function will get called properly.
-      - EGifPutExtensionLast: if the Extension block is empty (Zero length)
+      - EGifPutExtensionTerminate: if the Extension block is empty (Zero length)
         then don't attempt to output a last extension block, just output the 
         block terminator.
       - EGifPutExtension: Comment that this function does not work when there

@@ -24,8 +24,9 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-/*
- *  recogident.c
+/*!
+ * \file recogident.c
+ * <pre>
  *
  *      Top-level identification
  *         l_int32             recogaIdentifyMultiple()
@@ -90,6 +91,7 @@
  *  either all training examples or averaged templates, and these
  *  can be either scaled or unscaled.  These choices are specified
  *  when the recognizer is constructed.
+ * </pre>
  */
 
 #include <string.h>
@@ -100,9 +102,7 @@ static const l_int32    LeftRightPadding = 32;
 
     /* Parameters for filtering and sorting connected components in splitter */
 static const l_float32  MaxAspectRatio = 6.0;
-static const l_float32  MinFillFactor = 0.25;
-static const l_float32  MaxPreFillFactor = 0.80;
-static const l_float32  MaxSplitFillFactor = 0.85;
+static const l_float32  MinFillFactor = 0.10;
 static const l_int32  MinOverlap1 = 6;  /* in pass 1 of boxaSort2d() */
 static const l_int32  MinOverlap2 = 6;  /* in pass 2 of boxaSort2d() */
 static const l_int32  MinHeightPass1 = 5;  /* min height to start pass 1 */
@@ -120,8 +120,7 @@ static L_RCH *rchCreate(l_int32 index, l_float32 score, char *text,
 static L_RCHA *rchaCreate();
 static l_int32 transferRchToRcha(L_RCH *rch, L_RCHA *rcha);
 static void l_showIndicatorSplitValues(NUMA *na1, NUMA *na2, NUMA *na3,
-                                       NUMA *na4, NUMA *na5, NUMA *na6,
-                                       NUMA *na7);
+                                       NUMA *na4, NUMA *na5, NUMA *na6);
 static l_int32 recogaSaveBestRcha(L_RECOGA *recoga, PIXA *pixa);
 static l_int32 recogaTransferRch(L_RECOGA *recoga, L_RECOG *recog,
                                  l_int32 index);
@@ -130,39 +129,43 @@ static l_int32 recogaTransferRch(L_RECOGA *recoga, L_RECOG *recog,
  *                             Identification
  *------------------------------------------------------------------------*/
 /*!
- *  recogaIdentifyMultiple()
+ * \brief   recogaIdentifyMultiple()
  *
- *      Input:  recoga (with training finished)
- *              pixs (containing typically a small number of characters)
- *              nitems (to be identified in pix; use 0 if not known)
- *              minw (remove components with width less than this;
- *                    use -1 for removing all noise components)
- *              minh (remove components with height less than this;
- *                    use -1 for removing all noise components)
- *              &boxa (<optional return> locations of identified components)
- *              &pixa (<optional return> images of identified components)
- *              &pixdb (<optional return> debug pix: inputs and best fits)
- *              debugsplit (1 returns pix split debugging images)
- *      Return: 0 if OK; 1 if more or less than nitems were found (a warning);
- *              2 on error.
+ * \param[in]    recoga with training finished
+ * \param[in]    pixs containing typically a small number of characters
+ * \param[in]    nitems to be identified in pix; use 0 if not known
+ * \param[in]    minw remove components with width less than this;
+ *                    use -1 for removing all noise components
+ * \param[in]    minh remove components with height less than this;
+ *                    use -1 for removing all noise components
+ * \param[in]    skipsplit 1 to skip the splitting step
+ * \param[out]   pboxa [optional] locations of identified components
+ * \param[out]   ppixa [optional] images of identified components
+ * \param[out]   ppixdb [optional] debug pix: inputs and best fits
+ * \param[in]    debugsplit 1 returns pix split debugging images
+ * \return  0 if OK; 1 if nothing is found; 2 for other errors.
+ *              Get a warning if nitems and the number found are both > 0,
+ *              but not equal to each other.
  *
- *  Notes:
- *      (1) This filters the input pixa, looking for @nitems if requested.
- *          Set @nitems == 0 if you don't know how many chars to expect.
+ * <pre>
+ * Notes:
+ *      (1) This filters the input pixa, looking for %nitems if requested.
+ *          Set %nitems == 0 if you don't know how many chars to expect.
  *      (2) This bundles the filtered components into a pixa and calls
- *          recogIdentifyPixa().  If @nitems > 0, use @minw = -1 and
- *          @minh = -1 to remove all noise components.  If @nitems > 0
- *          and it doesn't agree with the number of filtered components
- *          in pixs, a warning is issued and a 1 is returned.
- *      (3) Set @minw = 0 and @minh = 0 to get all noise components.
- *          Set @minw > 0 and/or @minh > 0 to retain selected noise components.
+ *          recogIdentifyPixa().  If %nitems \> 0, use %minw = -1 and
+ *          %minh = -1 to remove all noise components.
+ *      (3) Set %minw = 0 and %minh = 0 to get all noise components.
+ *          Set %minw \> 0 and/or %minh \> 0 to retain selected noise components.
  *          All noise components are recognized as an empty string with
  *          a score of 0.0.
- *      (4) An attempt is made to return 2-dimensional sorted arrays
- *          of (optional) images and boxes, which can then be used to
- *          aggregate identified characters into numbers or words.
+ *      (4) Splitting is relatively slow, because it tries to match all
+ *          character templates to all locations.  This step can be skipped.
+ *      (5) An attempt is made to order the (optionally) returned images
+ *          and boxes in 2-dimensional sorted order.  These can then
+ *          be used to aggregate identified characters into numbers or words.
  *          One typically wants the pixa, which contains a boxa of the
  *          extracted subimages.
+ * </pre>
  */
 l_int32
 recogaIdentifyMultiple(L_RECOGA  *recoga,
@@ -170,12 +173,13 @@ recogaIdentifyMultiple(L_RECOGA  *recoga,
                        l_int32    nitems,
                        l_int32    minw,
                        l_int32    minh,
+                       l_int32    skipsplit,
                        BOXA     **pboxa,
                        PIXA     **ppixa,
                        PIX      **ppixdb,
                        l_int32    debugsplit)
 {
-l_int32   n, done, ret;
+l_int32   n, done;
 BOXA     *boxa;
 PIX      *pixb;
 PIXA     *pixa;
@@ -203,8 +207,8 @@ L_RECOG  *recog;
         pixb = pixClone(pixs);
 
         /* Noise removal and splitting of touching characters */
-    recogSplitIntoCharacters(recog, pixb, minw, minh, &boxa, &pixa, &naid,
-                             debugsplit);
+    recogSplitIntoCharacters(recog, pixb, minw, minh, skipsplit,
+                             &boxa, &pixa, &naid, debugsplit);
     pixDestroy(&pixb);
     if (!pixa || (n = pixaGetCount(pixa)) == 0) {
         pixaDestroy(&pixa);
@@ -214,11 +218,8 @@ L_RECOG  *recog;
         return 1;
     }
 
-    ret = 0;
-    if (nitems > 0 && n != nitems) {
+    if (nitems > 0 && n != nitems)
         L_WARNING("Expected %d items; found %d\n", procName, nitems, n);
-        ret = 1;
-    }
 
     recogaIdentifyPixa(recoga, pixa, naid, ppixdb);
     if (pboxa)
@@ -231,38 +232,39 @@ L_RECOG  *recog;
         pixaDestroy(&pixa);
 
     numaDestroy(&naid);
-    return ret;
+    return 0;
 }
 
 
 /*!
- *  recogSplitIntoCharacters()
+ * \brief   recogSplitIntoCharacters()
  *
- *      Input:  recog
- *              pixs (1 bpp, contains only mostly deskewed text)
- *              minw (remove components with width less than this;
- *                    use -1 for default removing out of band components)
- *              minh (remove components with height less than this;
- *                    use -1 for default removing out of band components)
- *              &boxa (<return> character bounding boxes)
- *              &pixa (<return> character images)
- *              &naid (<return> indices of components to identify)
- *              debug (1 for results written to pixadb_split)
+ * \param[in]    recog
+ * \param[in]    pixs 1 bpp, contains only mostly deskewed text
+ * \param[in]    minw remove components with width less than this;
+ *                    use -1 for default removing out of band components
+ * \param[in]    minh remove components with height less than this;
+ *                    use -1 for default removing out of band components
+ * \param[in]    skipsplit 1 to skip the splitting step
+ * \param[out]   pboxa character bounding boxes
+ * \param[out]   ppixa character images
+ * \param[out]   pnaid indices of components to identify
+ * \param[in]    debug 1 for results written to pixadb_split
+ * \return  0 if OK, 1 on error or if no components are returned
  *
- *      Return: 0 if OK, 1 on error
- *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This can be given an image that has an arbitrary number
- *          of text characters.  It does splitting of connected
+ *          of text characters.  It optionally splits connected
  *          components based on greedy correlation matching in
  *          recogCorrelationBestRow().  The returned pixa includes
  *          the boxes from which the (possibly split) components
  *          are extracted.
- *      (2) If either @minw < 0 or @minh < 0, noise components are
- *          filtered out, and the returned @naid array is all 1.
+ *      (2) If either %minw \< 0 or %minh \< 0, noise components are
+ *          filtered out, and the returned %naid array is all 1.
  *          Otherwise, some noise components whose dimensions (w,h)
- *          satisfy w >= @minw and h >= @minh are allowed through, but
- *          they are identified in the returned @naid, where they are
+ *          satisfy w \>= %minw and h \>= %minh are allowed through, but
+ *          they are identified in the returned %naid, where they are
  *          labelled by 0 to indicate that they are not to be run
  *          through identification.  Retaining the noise components
  *          provides spatial information that can help applications
@@ -274,12 +276,14 @@ L_RECOG  *recog;
  *      (4) Note that the spliting function uses unscaled templates
  *          and does not bother returning the class results and scores.
  *          Thes are more accurately found later using the scaled templates.
+ * </pre>
  */
 l_int32
 recogSplitIntoCharacters(L_RECOG  *recog,
                          PIX      *pixs,
                          l_int32   minw,
                          l_int32   minh,
+                         l_int32   skipsplit,
                          BOXA    **pboxa,
                          PIXA    **ppixa,
                          NUMA    **pnaid,
@@ -295,11 +299,11 @@ PIX     *pix, *pix1, *pix2;
 
     PROCNAME("recogSplitIntoCharacters");
 
+    if (pboxa) *pboxa = NULL;
+    if (ppixa) *ppixa = NULL;
+    if (pnaid) *pnaid = NULL;
     if (!pboxa || !ppixa || !pnaid)
         return ERROR_INT("&boxa, &pixa and &naid not defined", procName, 1);
-    *pboxa = NULL;
-    *ppixa = NULL;
-    *pnaid = NULL;
     if (!recog)
         return ERROR_INT("recog not defined", procName, 1);
     if (!recog->train_done)
@@ -307,18 +311,18 @@ PIX     *pix, *pix1, *pix2;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     pixZero(pixs, &empty);
-    if (empty) return 0;
+    if (empty) return 1;
 
         /* Small vertical close for consolidation.  Don't do a horizontal
          * closing, because it might join separate characters. */
     pix1 = pixMorphSequence(pixs, "c1.3", 0);
 
-        /* Filter out noise */
+        /* Carefully filter out noise */
     pix2 = recogPreSplittingFilter(recog, pix1, MaxAspectRatio,
-                                   MinFillFactor, MaxPreFillFactor, debug);
+                                   MinFillFactor, debug);
 
         /* Optionally, save a boxa of noise components, filtered
-         * according to input parameters @minw and @minh */
+         * according to input parameters %minw and %minh */
     boxa3 = NULL;
     savenoise = (minw >= 0 && minh >= 0);
     if (savenoise) {  /* accept some noise comonents */
@@ -341,7 +345,7 @@ PIX     *pix, *pix1, *pix2;
         boxaDestroy(&boxa1);
         boxaDestroy(&boxa3);
         L_WARNING("all components removed\n", procName);
-        return 0;
+        return 1;
     }
 
         /* Save everything and split the large non-noise components */
@@ -351,18 +355,24 @@ PIX     *pix, *pix1, *pix2;
     for (i = 0; i < ncomp; i++) {
         box = boxaGetBox(boxa1, i, L_CLONE);
         boxGetGeometry(box, &xoff, &yoff, &bw, NULL);
-        if (bw <= maxw || scaling) {  /* assume it's just one character */
+            /* Treat as one character if it is small, if the images
+             * have been scaled, or if splitting is not to be run. */
+        if (bw <= maxw || scaling || skipsplit) {
             boxaAddBox(boxa2, box, L_INSERT);
-        } else {  /* need to try to split the component */
+        } else {
             pix = pixClipRectangle(pixs, box, NULL);
             recogCorrelationBestRow(recog, pix, &boxat1, NULL, NULL,
                                     NULL, debug);
-            boxat2 = boxaTransform(boxat1, xoff, yoff, 1.0, 1.0);
-            boxaJoin(boxa2, boxat2, 0, -1);
-            boxaDestroy(&boxat1);
-            boxaDestroy(&boxat2);
             pixDestroy(&pix);
             boxDestroy(&box);
+            if (!boxat1) {
+              L_ERROR("boxat1 not found for component %d\n", procName, i);
+            } else {
+              boxat2 = boxaTransform(boxat1, xoff, yoff, 1.0, 1.0);
+              boxaJoin(boxa2, boxat2, 0, -1);
+              boxaDestroy(&boxat1);
+              boxaDestroy(&boxat2);
+            }
         }
     }
     boxaDestroy(&boxa1);
@@ -424,22 +434,24 @@ PIX     *pix, *pix1, *pix2;
 
 
 /*!
- *  recogCorrelationBestRow()
+ * \brief   recogCorrelationBestRow()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              pixs (typically of multiple touching characters, 1 bpp)
- *              &boxa (<return> bounding boxs of best fit character)
- *              &nascores (<optional return> correlation scores)
- *              &naindex (<optional return> indices of classes)
- *              &sachar (<optional return> array of character strings)
- *              debug (1 for results written to pixadb_split)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog with LUT's pre-computed
+ * \param[in]    pixs typically of multiple touching characters, 1 bpp
+ * \param[out]   pboxa bounding boxs of best fit character
+ * \param[out]   pnascore [optional] correlation scores
+ * \param[out]   pnaindex [optional] indices of classes
+ * \param[out]   psachar [optional] array of character strings
+ * \param[in]    debug 1 for results written to pixadb_split
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Supervises character matching for (in general) a c.c with
  *          multiple touching characters.  Finds the best match greedily.
  *          Rejects small parts that are left over after splitting.
  *      (2) Matching is to the average, and without character scaling.
+ * </pre>
  */
 l_int32
 recogCorrelationBestRow(L_RECOG  *recog,
@@ -467,15 +479,15 @@ l_int32    iter;
     if (pnascore) *pnascore = NULL;
     if (pnaindex) *pnaindex = NULL;
     if (psachar) *psachar = NULL;
+    if (!pboxa)
+        return ERROR_INT("&boxa not defined", procName, 1);
+    *pboxa = NULL;
     if (!recog)
         return ERROR_INT("recog not defined", procName, 1);
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     if (pixGetWidth(pixs) < recog->minwidth_u - 4)
         return ERROR_INT("pixs too narrow", procName, 1);
-    if (!pboxa)
-        return ERROR_INT("&boxa not defined", procName, 1);
-    *pboxa = NULL;
     if (!recog->train_done)
         return ERROR_INT("training not finished", procName, 1);
 
@@ -515,7 +527,7 @@ l_int32    iter;
 
             /* This is a single component; if noise, remove it */
         recogSplittingFilter(recog, pixc, MaxAspectRatio, MinFillFactor,
-                             MaxSplitFillFactor, &remove, debug);
+                             &remove, debug);
         if (debug)
             fprintf(stderr, "iter = %d, removed = %d\n", iter, remove);
         if (remove) {
@@ -603,24 +615,26 @@ l_int32    iter;
 
 
 /*!
- *  recogCorrelationBestChar()
+ * \brief   recogCorrelationBestChar()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              pixs (can be of multiple touching characters, 1 bpp)
- *              &box (<return> bounding box of best fit character)
- *              &score (<return> correlation score)
- *              &index (<optional return> index of class)
- *              &charstr (<optional return> character string of class)
- *              &pixdb (<optional return> debug pix showing input and best fit)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog with LUT's pre-computed
+ * \param[in]    pixs can be of multiple touching characters, 1 bpp
+ * \param[out]   pbox bounding box of best fit character
+ * \param[out]   pscore correlation score
+ * \param[out]   pindex [optional] index of class
+ * \param[out]   pcharstr [optional] character string of class
+ * \param[out]   ppixdb [optional] debug pix showing input and best fit
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Basic matching character splitter.  Finds the best match among
  *          all templates to some region of the image.  This can result
  *          in splitting the image into two parts.  This is "image decoding"
  *          without dynamic programming, because we don't use a setwidth
  *          and compute the best matching score for the entire image.
  *      (2) Matching is to the average templates, without character scaling.
+ * </pre>
  */
 l_int32
 recogCorrelationBestChar(L_RECOG    *recog,
@@ -641,15 +655,13 @@ PIX       *pix1, *pix2;
 
     PROCNAME("recogCorrelationBestChar");
 
-    if (ppixdb) *ppixdb = NULL;
     if (pindex) *pindex = 0;
     if (pcharstr) *pcharstr = NULL;
-    if (!pbox)
-        return ERROR_INT("&box not defined", procName, 1);
-    *pbox = NULL;
-    if (!pscore)
-        return ERROR_INT("&score not defined", procName, 1);
-    *pscore = 0.0;
+    if (ppixdb) *ppixdb = NULL;
+    if (pbox) *pbox = NULL;
+    if (pscore) *pscore = 0.0;
+    if (!pbox || !pscore)
+        return ERROR_INT("&box and &score not both defined", procName, 1);
     if (!recog)
         return ERROR_INT("recog not defined", procName, 1);
     if (!pixs || pixGetDepth(pixs) != 1)
@@ -728,26 +740,27 @@ PIX       *pix1, *pix2;
 
 
 /*!
- *  pixCorrelationBestShift()
+ * \brief   pixCorrelationBestShift()
  *
- *      Input:  pix1   (1 bpp, the unknown image; typically larger)
- *              pix2   (1 bpp, the matching template image))
- *              nasum1 (vertical column pixel sums for pix1)
- *              namoment1  (vertical column first moment of pixels for pix1)
- *              area2  (number of on pixels in pix2)
- *              ycent2  (y component of centroid of pix2)
- *              maxyshift  (max y shift of pix2 around the location where
+ * \param[in]    pix1   1 bpp, the unknown image; typically larger
+ * \param[in]    pix2   1 bpp, the matching template image)
+ * \param[in]    nasum1 vertical column pixel sums for pix1
+ * \param[in]    namoment1  vertical column first moment of pixels for pix1
+ * \param[in]    area2  number of on pixels in pix2
+ * \param[in]    ycent2  y component of centroid of pix2
+ * \param[in]    maxyshift  max y shift of pix2 around the location where
  *                          the centroids of pix2 and a windowed part of pix1
- *                          are vertically aligned)
- *              tab8 (<optional> sum tab for ON pixels in byte; can be NULL)
- *              &delx (<optional return> best x shift of pix2 relative to pix1
- *              &dely (<optional return> best y shift of pix2 relative to pix1
- *              &score (<optional return> maximum score found; can be NULL)
- *              debugflag (<= 0 to skip; positive to generate output.
- *                         The integer is used to label the debug image.)
- *      Return: 0 if OK, 1 on error
+ *                          are vertically aligned
+ * \param[in]    tab8 [optional] sum tab for ON pixels in byte; can be NULL
+ * \param[out]   pdelx [optional] best x shift of pix2 relative to pix1
+ *           [out]   pdely ([optional] best y shift of pix2 relative to pix1
+ *           [out]   pscore ([optional] maximum score found; can be NULL
+ * \param[in]    debugflag <= 0 to skip; positive to generate output.
+ *                         The integer is used to label the debug image.
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This maximizes the correlation score between two 1 bpp images,
  *          one of which is typically wider.  In a typical example,
  *          pix1 is a bitmap of 2 or more touching characters and pix2 is
@@ -755,13 +768,14 @@ PIX       *pix1, *pix2;
  *          that gives the largest correlation.
  *      (2) The windowed area of fg pixels and windowed first moment
  *          in the y direction are computed from the input sum and moment
- *          column arrays, @nasum1 and @namoment1
+ *          column arrays, %nasum1 and %namoment1
  *      (3) This is a brute force operation.  We compute the correlation
  *          at every x shift for which pix2 fits entirely within pix1,
  *          and where the centroid of pix2 is aligned, within +-maxyshift,
  *          with the centroid of a window of pix1 of the same width.
  *          The correlation is taken over the full height of pix1.
  *          This can be made more efficient.
+ * </pre>
  */
 static l_int32
 pixCorrelationBestShift(PIX        *pix1,
@@ -822,8 +836,8 @@ PIX        *pixt, *pixt1, *pixt2;
 
         /* Set up the arrays for area1 and ycent1.  We have to do this
          * for each template (pix2) because the window width is w2. */
-    area1 = (l_int32 *)CALLOC(nx, sizeof(l_int32));
-    ycent1 = (l_float32 *)CALLOC(nx, sizeof(l_int32));
+    area1 = (l_int32 *)LEPT_CALLOC(nx, sizeof(l_int32));
+    ycent1 = (l_float32 *)LEPT_CALLOC(nx, sizeof(l_int32));
     arraysum = numaGetIArray(nasum1);
     arraymoment = numaGetIArray(namoment1);
     for (i = 0, sum = 0, moment = 0; i < w2; i++) {
@@ -871,11 +885,11 @@ PIX        *pixt, *pixt1, *pixt2;
     }
 
     if (debugflag > 0) {
-        lept_mkdir("recog");
+        lept_mkdir("lept/recog");
         char  buf[128];
         pixt1 = fpixDisplayMaxDynamicRange(fpix);
         pixt2 = pixExpandReplicate(pixt1, 5);
-        snprintf(buf, sizeof(buf), "/tmp/recog/junkbs_%d.png", debugflag);
+        snprintf(buf, sizeof(buf), "/tmp/lept/recog/junkbs_%d.png", debugflag);
         pixWrite(buf, pixt2, IFF_PNG);
         pixDestroy(&pixt1);
         pixDestroy(&pixt2);
@@ -885,11 +899,11 @@ PIX        *pixt, *pixt1, *pixt2;
     if (pdelx) *pdelx = delx;
     if (pdely) *pdely = dely;
     if (pscore) *pscore = maxscore;
-    if (!tab8) FREE(tab);
-    FREE(area1);
-    FREE(ycent1);
-    FREE(arraysum);
-    FREE(arraymoment);
+    if (!tab8) LEPT_FREE(tab);
+    LEPT_FREE(area1);
+    LEPT_FREE(ycent1);
+    LEPT_FREE(arraysum);
+    LEPT_FREE(arraymoment);
     pixDestroy(&pixt);
     return 0;
 }
@@ -899,18 +913,20 @@ PIX        *pixt, *pixt1, *pixt2;
  *                          Low-level identification                      *
  *------------------------------------------------------------------------*/
 /*!
- *  recogaIdentifyPixa()
+ * \brief   recogaIdentifyPixa()
  *
- *      Input:  recoga
- *              pixa (of 1 bpp images to match)
- *              naid (<optional> indices of components to identify; can be null)
- *              &pixdb (<optional return> pix showing inputs and best fits)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recoga
+ * \param[in]    pixa of 1 bpp images to match
+ * \param[in]    naid [optional] indices of components to identify; can be null
+ * \param[out]   ppixdb [optional] pix showing inputs and best fits
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) See recogIdentifyPixa().  This does the same operation
  *          for each recog, returning the arrays of results (scores,
  *          class index and character string) for the best correlation match.
+ * </pre>
  */
 l_int32
 recogaIdentifyPixa(L_RECOGA  *recoga,
@@ -966,19 +982,21 @@ L_RECOG   *recog;
 
 
 /*!
- *  recogIdentifyPixa()
+ * \brief   recogIdentifyPixa()
  *
- *      Input:  recog
- *              pixa (of 1 bpp images to match)
- *              naid (<optional> indices of components to identify; can be null)
- *              &pixdb (<optional return> pix showing inputs and best fits)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \param[in]    pixa of 1 bpp images to match
+ * \param[in]    naid [optional] indices of components to identify; can be null
+ * \param[out]   ppixdb [optional] pix showing inputs and best fits
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) See recogIdentifyPix().  This does the same operation
  *          for each pix in a pixa, and optionally returns the arrays
  *          of results (scores, class index and character string)
  *          for the best correlation match.
+ * </pre>
  */
 l_int32
 recogIdentifyPixa(L_RECOG  *recog,
@@ -987,7 +1005,7 @@ recogIdentifyPixa(L_RECOG  *recog,
                   PIX     **ppixdb)
 {
 char      *text;
-l_int32    i, n, doit, index, depth;
+l_int32    i, n, doit, fail, index, depth;
 l_float32  score;
 NUMA      *naidt;
 PIX       *pix1, *pix2, *pix3;
@@ -1020,20 +1038,26 @@ L_RCH     *rch;
     depth = 1;
     for (i = 0; i < n; i++) {
         pix1 = pixaGetPix(pixa, i, L_CLONE);
+        pix2 = NULL;
+        fail = FALSE;
         numaGetIValue(naidt, i, &doit);
         if (!doit)
             recogSkipIdentify(recog);
         else if (!ppixdb)
-            recogIdentifyPix(recog, pix1, NULL);
+            fail = recogIdentifyPix(recog, pix1, NULL);
         else
-            recogIdentifyPix(recog, pix1, &pix2);
+            fail = recogIdentifyPix(recog, pix1, &pix2);
+        if (fail)
+            recogSkipIdentify(recog);
         if ((rch = recog->rch) == NULL) {
             L_ERROR("rch not found for char %d\n", procName, i);
+            pixDestroy(&pix1);
+            pixDestroy(&pix2);
             continue;
         }
         rchExtract(rch, NULL, NULL, &text, NULL, NULL, NULL, NULL);
         pixSetText(pix1, text);
-        FREE(text);
+        LEPT_FREE(text);
         if (ppixdb && doit) {
             rchExtract(rch, &index, &score, NULL, NULL, NULL, NULL, NULL);
             pix3 = recogShowMatch(recog, pix2, NULL, NULL, index, score);
@@ -1057,17 +1081,20 @@ L_RCH     *rch;
 
 
 /*!
- *  recogIdentifyPix()
+ * \brief   recogIdentifyPix()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              pixs (of a single character, 1 bpp)
- *              &pixdb (<optional return> debug pix showing input and best fit)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog with LUT's pre-computed
+ * \param[in]    pixs of a single character, 1 bpp
+ * \param[out]   ppixdb [optional] debug pix showing input and best fit
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Basic recognition function for a single character.
- *      (2) If L_USE_AVERAGE, the matching is only to the averaged bitmaps,
- *          and the index of the sample is meaningless (0 is returned
+ *      (2) If L_USE_ALL, matching is attempted to every bitmap in the recog,
+ *          and the identify of the best match is returned.  However,
+ *          if L_USE_AVERAGE, the matching is only to the averaged bitmaps,
+ *          and the index of the bestsample is meaningless (0 is returned
  *          if requested).
  *      (3) The score is related to the confidence (probability of correct
  *          identification), in that a higher score is correlated with
@@ -1075,6 +1102,7 @@ L_RCH     *rch;
  *          the correlation (score) and the probability is not known;
  *          we call this a "score" because "confidence" can be misinterpreted
  *          as an actual probability.
+ * </pre>
  */
 l_int32
 recogIdentifyPix(L_RECOG  *recog,
@@ -1104,7 +1132,8 @@ PTA       *pta;
         recogAverageSamples(recog, 0);
 
         /* Binarize and crop to foreground if necessary */
-    pix0 = recogProcessToIdentify(recog, pixs, 0);
+    if ((pix0 = recogProcessToIdentify(recog, pixs, 0)) == NULL)
+        return ERROR_INT("no fg pixels in pix0", procName, 1);
 
         /* Do correlation at all positions within +-maxyshift of
          * the nominal centroid alignment. */
@@ -1184,12 +1213,12 @@ PTA       *pta;
 
     if (ppixdb) {
         if (recog->templ_type == L_USE_AVERAGE) {
-            L_INFO("Best match: class %d; shifts (%d, %d)\n",
-                   procName, bestindex, bestdelx, bestdely);
+            L_INFO("Best match: str %s; class %d; sh (%d, %d); score %5.3f\n",
+                   procName, text, bestindex, bestdelx, bestdely, maxscore);
             pix2 = pixaGetPix(recog->pixa, bestindex, L_CLONE);
         } else {  /* L_USE_ALL */
-            L_INFO("Best match: sample %d in class %d\n",
-                   procName, bestsample, bestindex);
+            L_INFO("Best match: str %s; sample %d in class %d; score %5.3f\n",
+                   procName, text, bestsample, bestindex, maxscore);
             if (maxyshift > 0) {
                 L_INFO("  Best shift: (%d, %d)\n",
                        procName, bestdelx, bestdely);
@@ -1207,14 +1236,16 @@ PTA       *pta;
 
 
 /*!
- *  recogSkipIdentify()
+ * \brief   recogSkipIdentify()
  *
- *      Input:  recog
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This just writes a "dummy" result with 0 score and empty
  *          string id into the rch.
+ * </pre>
  */
 l_int32
 recogSkipIdentify(L_RECOG  *recog)
@@ -1235,7 +1266,7 @@ recogSkipIdentify(L_RECOG  *recog)
  *             Operations for handling identification results             *
  *------------------------------------------------------------------------*/
 /*!
- *  rchaCreate()
+ * \brief   rchaCreate()
  *
  *      Return: 0 if OK, 1 on error
  *
@@ -1247,7 +1278,7 @@ rchaCreate()
 {
 L_RCHA  *rcha;
 
-    rcha = (L_RCHA *)CALLOC(1, sizeof(L_RCHA));
+    rcha = (L_RCHA *)LEPT_CALLOC(1, sizeof(L_RCHA));
     rcha->naindex = numaCreate(0);
     rcha->nascore = numaCreate(0);
     rcha->satext = sarrayCreate(0);
@@ -1260,10 +1291,9 @@ L_RCHA  *rcha;
 
 
 /*!
- *  rchaDestroy()
+ * \brief   rchaDestroy()
  *
- *      Input:  &rcha
- *      Return: void
+ * \param[in,out]  prcha to be nulled
  */
 void
 rchaDestroy(L_RCHA  **prcha)
@@ -1286,26 +1316,30 @@ L_RCHA  *rcha;
     numaDestroy(&rcha->naxloc);
     numaDestroy(&rcha->nayloc);
     numaDestroy(&rcha->nawidth);
-    FREE(rcha);
+    LEPT_FREE(rcha);
     *prcha = NULL;
     return;
 }
 
 
 /*!
- *  rchCreate()
+ * \brief   rchCreate()
  *
- *      Input:  index (index of best template)
- *              score (correlation score of best template)
- *              text (character string of best template)
- *              sample (index of best sample; -1 if averages are used)
- *              xloc (x-location of template: delx + shiftx)
- *              yloc (y-location of template: dely + shifty)
- *              width (width of best template)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    index index of best template
+ * \param[in]    score correlation score of best template
+ * \param[in]    text character string of best template
+ * \param[in]    sample index of best sample; -1 if averages are used
+ * \param[in]    xloc x-location of template: delx + shiftx
+ * \param[in]    yloc y-location of template: dely + shifty
+ * \param[in]    width width of best template
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Be sure to destroy any existing rch before assigning this.
+ *      (2) This stores the text string, not a copy of it, so the
+ *          caller must not destroy the string.
+ * </pre>
  */
 static L_RCH *
 rchCreate(l_int32    index,
@@ -1318,7 +1352,7 @@ rchCreate(l_int32    index,
 {
 L_RCH  *rch;
 
-    rch = (L_RCH *)CALLOC(1, sizeof(L_RCH));
+    rch = (L_RCH *)LEPT_CALLOC(1, sizeof(L_RCH));
     rch->index = index;
     rch->score = score;
     rch->text = text;
@@ -1331,10 +1365,9 @@ L_RCH  *rch;
 
 
 /*!
- *  rchDestroy()
+ * \brief   rchDestroy()
  *
- *      Input:  &rch
- *      Return: void
+ * \param[in,out] prch to be nulled
  */
 void
 rchDestroy(L_RCH  **prch)
@@ -1349,29 +1382,31 @@ L_RCH  *rch;
     }
     if ((rch = *prch) == NULL)
         return;
-    FREE(rch->text);
-    FREE(rch);
+    LEPT_FREE(rch->text);
+    LEPT_FREE(rch);
     *prch = NULL;
     return;
 }
 
 
 /*!
- *  rchaExtract()
+ * \brief   rchaExtract()
  *
- *      Input:  rcha
- *              &naindex (<optional return> indices of best templates)
- *              &nascore (<optional return> correl scores of best templates)
- *              &satext (<optional return> character strings of best templates)
- *              &nasample (<optional return> indices of best samples)
- *              &naxloc (<optional return> x-locations of templates)
- *              &nayloc (<optional return> y-locations of templates)
- *              &nawidth (<optional return> widths of best templates)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    rcha
+ * \param[out]   pnaindex [optional] indices of best templates
+ * \param[out]   pnascore [optional] correl scores of best templates
+ * \param[out]   psatext [optional] character strings of best templates
+ * \param[out]   pnasample [optional] indices of best samples
+ * \param[out]   pnaxloc [optional] x-locations of templates
+ * \param[out]   pnayloc [optional] y-locations of templates
+ * \param[out]   pnawidth [optional] widths of best templates
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This returns clones of the number and string arrays.  They must
  *          be destroyed by the caller.
+ * </pre>
  */
 l_int32
 rchaExtract(L_RCHA   *rcha,
@@ -1407,17 +1442,17 @@ rchaExtract(L_RCHA   *rcha,
 
 
 /*!
- *  rchExtract()
+ * \brief   rchExtract()
  *
- *      Input:  rch
- *              &index (<optional return> index of best template)
- *              &score (<optional return> correlation score of best template)
- *              &text (<optional return> character string of best template)
- *              &sample (<optional return> index of best sample)
- *              &xloc (<optional return> x-location of template)
- *              &yloc (<optional return> y-location of template)
- *              &width (<optional return> width of best template)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    rch
+ * \param[out]   pindex [optional] index of best template
+ * \param[out]   pscore [optional] correlation score of best template
+ * \param[out]   ptext [optional] character string of best template
+ * \param[out]   psample [optional] index of best sample
+ * \param[out]   pxloc [optional] x-location of template
+ * \param[out]   pyloc [optional] y-location of template
+ * \param[out]   pwidth [optional] width of best template
+ * \return  0 if OK, 1 on error
  */
 l_int32
 rchExtract(L_RCH      *rch,
@@ -1453,15 +1488,17 @@ rchExtract(L_RCH      *rch,
 
 
 /*!
- *  transferRchToRcha()
+ * \brief   transferRchToRcha()
  *
- *      Input:  rch (source of data)
- *              rcha (append to arrays in this destination)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    rch source of data
+ * \param[in]    rcha append to arrays in this destination
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This is used to transfer the results of a single character
  *          identification to an rcha array for the array of characters.
+ * </pre>
  */
 static l_int32
 transferRchToRcha(L_RCH   *rch,
@@ -1487,17 +1524,19 @@ transferRchToRcha(L_RCH   *rch,
 
 
 /*!
- *  recogaSaveBestRcha()
+ * \brief   recogaSaveBestRcha()
  *
- *      Input:  recoga
- *              pixa (with all components having been identified)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recoga
+ * \param[in]    pixa with all components having been identified
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Finds the best score among the recognizers for each character,
  *          and puts the rch data into a rcha in the recoga.  This is
  *          run after all recognizers have been applied to the pixa.
  *      (2) This also writes the best text id for each pix into its text field.
+ * </pre>
  */
 static l_int32
 recogaSaveBestRcha(L_RECOGA  *recoga,
@@ -1566,17 +1605,19 @@ SARRAY    *satext;
 
 
 /*!
- *  recogaTransferRch()
+ * \brief   recogaTransferRch()
  *
- *      Input:  recoga (destination, with rcha defined)
- *              recog (source, with best scoring char in its rcha)
- *              index (index of component in the original pixa)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recoga destination, with rcha defined
+ * \param[in]    recog source, with best scoring char in its rcha
+ * \param[in]    index index of component in the original pixa
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This is called by recogaGetBestRcha() to transfer the results
  *          of a single character identification in a selected recog to the
  *          rcha array in the recoga, which holds the best scoring characters.
+ * </pre>
  */
 static l_int32
 recogaTransferRch(L_RECOGA  *recoga,
@@ -1619,17 +1660,20 @@ L_RCHA    *rchas, *rchad;
  *                        Preprocessing and filtering                     *
  *------------------------------------------------------------------------*/
 /*!
- *  recogProcessToIdentify()
+ * \brief   recogProcessToIdentify()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              pixs (typ. single character, possibly d > 1 and uncropped)
- *              pad (extra pixels added to left and right sides)
- *      Return: pixd (1 bpp, clipped to foreground), or null on error.
+ * \param[in]    recog with LUT's pre-computed
+ * \param[in]    pixs typ. single character, possibly d > 1 and uncropped
+ * \param[in]    pad extra pixels added to left and right sides
+ * \return  pixd 1 bpp, clipped to foreground, or NULL if there
+ *                    are no fg pixels or on error.
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This is a lightweight operation to insure that the input
  *          image is 1 bpp, properly cropped, and padded on each side.
- *          If bpp > 1, the image is thresholded.
+ *          If bpp \> 1, the image is thresholded.
+ * </pre>
  */
 PIX *
 recogProcessToIdentify(L_RECOG  *recog,
@@ -1646,7 +1690,7 @@ PIX     *pix1, *pix2, *pixd;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
 
-    if (pixGetDepth(pixs) > 1)
+    if (pixGetDepth(pixs) != 1)
         pix1 = pixThresholdToBinary(pixs, recog->threshold);
     else
         pix1 = pixClone(pixs);
@@ -1655,35 +1699,36 @@ PIX     *pix1, *pix2, *pixd;
         pixClipToForeground(pix1, &pix2, NULL);
     else
         pix2 = pixClone(pix1);
-    pixd = pixAddBorderGeneral(pix2, pad, pad, 0, 0, 0);
     pixDestroy(&pix1);
+    if (!pix2)
+        return (PIX *)ERROR_PTR("no foreground pixels", procName, NULL);
+
+    pixd = pixAddBorderGeneral(pix2, pad, pad, 0, 0, 0);
     pixDestroy(&pix2);
     return pixd;
 }
 
 
 /*!
- *  recogPreSplittingFilter()
+ * \brief   recogPreSplittingFilter()
  *
- *      Input:  recog
- *              pixs (1 bpp, single connected component)
- *              maxasp (maximum asperity ratio (width/height) to be retained)
- *              minaf (minimum area fraction (|fg|/(w*h)) to be retained)
- *              maxaf (maximum area fraction (|fg|/(w*h)) to be retained)
- *              debug (1 to output indicator arrays)
- *      Return: pixd (with filtered components removed) or null on error
+ * \param[in]    recog
+ * \param[in]    pixs 1 bpp, single connected component
+ * \param[in]    maxasp maximum asperity ratio (width/height) to be retained
+ * \param[in]    minaf minimum area fraction (|fg|/(w*h)) to be retained
+ * \param[in]    debug 1 to output indicator arrays
+ * \return  pixd with filtered components removed or NULL on error
  */
 PIX *
 recogPreSplittingFilter(L_RECOG   *recog,
                         PIX       *pixs,
                         l_float32  maxasp,
                         l_float32  minaf,
-                        l_float32  maxaf,
                         l_int32    debug)
 {
 l_int32  scaling, minsplitw, minsplith, maxsplith;
 BOXA    *boxas;
-NUMA    *naw, *nah, *na1, *na1c, *na2, *na3, *na4, *na5, *na6, *na7, *na8, *na9;
+NUMA    *naw, *nah, *na1, *na1c, *na2, *na3, *na4, *na5, *na6, *na7;
 PIX     *pixd;
 PIXA    *pixas;
 
@@ -1705,8 +1750,7 @@ PIXA    *pixas;
          *    small stuff
          *    tall stuff
          *    components with large width/height ratio
-         *    components with small area fill fraction
-         *    components with large area fill fraction and w/h > 0.7  */
+         *    components with small area fill fraction  */
     boxas = pixConnComp(pixs, &pixas, 8);
     pixaFindDimensions(pixas, &naw, &nah);
     na1 = numaMakeThresholdIndicator(naw, minsplitw, L_SELECT_IF_LT);
@@ -1717,18 +1761,14 @@ PIXA    *pixas;
     na5 = numaMakeThresholdIndicator(na4, maxasp, L_SELECT_IF_GT);
     na6 = pixaFindAreaFraction(pixas);
     na7 = numaMakeThresholdIndicator(na6, minaf, L_SELECT_IF_LT);
-    na8 = numaMakeThresholdIndicator(na6, maxaf, L_SELECT_IF_GT);
-    na9 = numaMakeThresholdIndicator(na4, 0.7, L_SELECT_IF_GT);
     numaLogicalOp(na1, na1, na2, L_UNION);
     numaLogicalOp(na1, na1, na3, L_UNION);
     numaLogicalOp(na1, na1, na5, L_UNION);
     numaLogicalOp(na1, na1, na7, L_UNION);
-    numaLogicalOp(na8, na8, na9, L_INTERSECTION);  /* require both */
-    numaLogicalOp(na1, na1, na8, L_UNION);
     pixd = pixCopy(NULL, pixs);
     pixRemoveWithIndicator(pixd, pixas, na1);
     if (debug)
-        l_showIndicatorSplitValues(na1c, na2, na3, na5, na7, na8, na1);
+        l_showIndicatorSplitValues(na1c, na2, na3, na5, na7, na1);
     numaDestroy(&naw);
     numaDestroy(&nah);
     numaDestroy(&na1);
@@ -1739,8 +1779,6 @@ PIXA    *pixas;
     numaDestroy(&na5);
     numaDestroy(&na6);
     numaDestroy(&na7);
-    numaDestroy(&na8);
-    numaDestroy(&na9);
     boxaDestroy(&boxas);
     pixaDestroy(&pixas);
     return pixd;
@@ -1748,28 +1786,21 @@ PIXA    *pixas;
 
 
 /*!
- *  recogSplittingFilter()
+ * \brief   recogSplittingFilter()
  *
- *      Input:  recog
- *              pixs (1 bpp, single connected component)
- *              maxasp (maximum asperity ratio (width/height) to be retained)
- *              minaf (minimum area fraction (|fg|/(w*h)) to be retained)
- *              maxaf (maximum area fraction (|fg|/(w*h)) to be retained)
- *              &remove (<return> 0 to save, 1 to remove)
- *              debug (1 to output indicator arrays)
- *      Return: 0 if OK, 1 on error
- *
- *  Notes:
- *      (1) We don't want to eliminate sans serif characters like "1" or "l",
- *          so we use the filter condition requiring both a large area fill
- *          and a w/h ratio > 1.0.
+ * \param[in]    recog
+ * \param[in]    pixs 1 bpp, single connected component
+ * \param[in]    maxasp maximum asperity ratio (width/height) to be retained
+ * \param[in]    minaf minimum area fraction (|fg|/(w*h)) to be retained
+ * \param[out]   premove 0 to save, 1 to remove
+ * \param[in]    debug 1 to output indicator arrays
+ * \return  0 if OK, 1 on error
  */
 l_int32
 recogSplittingFilter(L_RECOG   *recog,
                      PIX       *pixs,
                      l_float32  maxasp,
                      l_float32  minaf,
-                     l_float32  maxaf,
                      l_int32   *premove,
                      l_int32    debug)
 {
@@ -1789,8 +1820,7 @@ l_float32  aspratio, fract;
         /* Remove from further consideration:
          *    small stuff
          *    components with large width/height ratio
-         *    components with small area fill fraction
-         *    components with large area fill fraction and w/h > 1.0  */
+         *    components with small area fill fraction */
     pixGetDimensions(pixs, &w, &h, NULL);
     if (w < recog->min_splitw) {
         if (debug) L_INFO("w = %d < %d\n", procName, w, recog->min_splitw);
@@ -1815,12 +1845,6 @@ l_float32  aspratio, fract;
         *premove = 1;
         return 0;
     }
-    if (fract > maxaf && aspratio > 1.0) {
-        if (debug) L_INFO("area fill = %5.3f; aspect ratio = %5.3f\n",
-                          procName, fract, aspratio);
-        *premove = 1;
-        return 0;
-    }
 
     return 0;
 }
@@ -1830,33 +1854,38 @@ l_float32  aspratio, fract;
  *                              Postprocessing                            *
  *------------------------------------------------------------------------*/
 /*!
- *  recogaExtractNumbers()
+ * \brief   recogaExtractNumbers()
  *
- *      Input:  recog
- *              boxas (location of components)
- *              scorethresh (min score for which we accept a component)
- *              spacethresh (max horizontal distance allowed between digits,
- *                           use -1 for default)
- *              &baa (<optional return> bounding boxes of identified numbers)
- *              &naa (<optional return> scores of identified digits)
- *      Return: sa (of identified numbers), or null on error
+ * \param[in]    recoga
+ * \param[in]    boxas location of components
+ * \param[in]    scorethresh min score for which we accept a component
+ * \param[in]    spacethresh max horizontal distance allowed between digits,
+ *                           use -1 for default
+ * \param[out]   pbaa [optional] bounding boxes of identified numbers
+ * \param[out]   pnaa [optional] scores of identified digits
+ * \return  sa of identified numbers, or NULL on error
  *
- *  Notes:
- *      (1) Each string in the returned sa contains a sequence of ascii
+ * <pre>
+ * Notes:
+ *      (1) This extracts digit data after recogaIdentifyMultiple() or
+ *          lower-level identification has taken place.
+ *      (2) Each string in the returned sa contains a sequence of ascii
  *          digits in a number.
- *      (2) The horizontal distance between boxes (limited by @spacethresh)
+ *      (3) The horizontal distance between boxes (limited by %spacethresh)
  *          is the negative of the horizontal overlap.
- *      (3) We allow two digits to be combined if these conditions apply:
+ *      (4) Components with a score less than %scorethresh, which may
+ *          be hyphens or other small characters, will signal the
+ *          end of the current sequence of digits in the number.  A typical
+ *          value for %scorethresh is 0.60.
+ *      (5) We allow two digits to be combined if these conditions apply:
  *            (a) the first is to the left of the second
- *            (b) the second has a horizontal separation less than @spacethresh
- *            (c) the vertical overlap >= 0 (vertical separation < 0)
- *            (d) both have a score that exceeds @scorethresh
- *      (4) Each numa in the optionally returned naa contains the digit
+ *            (b) the second has a horizontal separation less than %spacethresh
+ *            (c) the vertical overlap \>= 0 (vertical separation \< 0)
+ *            (d) both have a score that exceeds %scorethresh
+ *      (6) Each numa in the optionally returned naa contains the digit
  *          scores of a number.  Each boxa in the optionally returned baa
  *          contains the bounding boxes of the digits in the number.
- *      (5) Components with a score less than @scorethresh, which may
- *          be hyphens or other small characters, will signal the
- *          end of the current sequence of digits in the number.
+ * </pre>
  */
 SARRAY *
 recogaExtractNumbers(L_RECOGA  *recoga,
@@ -1890,10 +1919,12 @@ SARRAY    *satext, *sa, *saout;
     if (spacethresh < 0) {
         if ((recog = recogaGetRecog(recoga, 0)) == NULL)
             return (SARRAY *)ERROR_PTR("recog not found", procName, NULL);
-        spacethresh = L_MAX(recog->maxwidth_u, 20);
+        spacethresh = L_MAX(recog->maxheight_u, 20);
     }
     rchaExtract(recoga->rcha, NULL, &nascore, &satext, NULL, NULL, NULL, NULL);
     if (!nascore || !satext) {
+        numaDestroy(&nascore);
+        sarrayDestroy(&satext);
         return (SARRAY *)ERROR_PTR("nascore and satext not both returned",
                                    procName, NULL);
     }
@@ -1956,6 +1987,13 @@ SARRAY    *satext, *sa, *saout;
 
     numaDestroy(&nascore);
     sarrayDestroy(&satext);
+    if (sarrayGetCount(saout) == 0) {
+        sarrayDestroy(&saout);
+        boxaaDestroy(&baa);
+        numaaDestroy(&naa);
+        return (SARRAY *)ERROR_PTR("saout has no strings", procName, NULL);
+    }
+
     if (pbaa)
         *pbaa = baa;
     else
@@ -1972,11 +2010,11 @@ SARRAY    *satext, *sa, *saout;
  *                         Modifying recog behavior                       *
  *------------------------------------------------------------------------*/
 /*!
- *  recogSetTemplateType()
+ * \brief   recogSetTemplateType()
  *
- *      Input:  recog
- *              templ_type (L_USE_AVERAGE or L_USE_ALL)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \param[in]    templ_type L_USE_AVERAGE or L_USE_ALL
+ * \return  0 if OK, 1 on error
  */
 l_int32
 recogSetTemplateType(L_RECOG  *recog,
@@ -1995,17 +2033,32 @@ recogSetTemplateType(L_RECOG  *recog,
 
 
 /*!
- *  recogSetScaling()
+ * \brief   recogSetScaling()
  *
- *      Input:  recog
- *              scalew  (scale all widths to this; use 0 for no scaling)
- *              scaleh  (scale all heights to this; use 0 for no scaling)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \param[in]    scalew  scale all widths to this; use 0 for no scaling
+ * \param[in]    scaleh  scale all heights to this; use 0 for no scaling
+ * \param[in]    templ_type L_USE_AVERAGE or L_USE_ALL
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This is entirely equivalent to extracting the unscaled
+ *          pixa from the recog, and creating a new recog using it:
+ *            pixa = recogExtractPixa(recog1);
+ *            recog2 = recogCreateFromPixa(pixa, 0, 0, L_USE_ALL, 128, 1);
+ *          This is useful when making a book adapted recognizer (BAR)
+ *          from the training results with a boot recognizer (BR).
+ *          The BR is used to train the BAR on unlabelled images that
+ *          are scaled to a fixed dimension.  Once trained, the BAR
+ *          works best if converted to identify unscaled images.
+ * </pre>
  */
 l_int32
 recogSetScaling(L_RECOG  *recog,
                 l_int32   scalew,
-                l_int32   scaleh)
+                l_int32   scaleh,
+                l_int32   templ_type)
 {
     PROCNAME("recogSetScaling");
 
@@ -2017,9 +2070,12 @@ recogSetScaling(L_RECOG  *recog,
         L_INFO("scaling factors not changed\n", procName);
         return 0;
     }
+    if (templ_type != L_USE_AVERAGE && templ_type != L_USE_ALL)
+        return ERROR_INT("invalid templ_type", procName, 1);
 
     recog->scalew = scalew;
     recog->scaleh = scaleh;
+    recog->templ_type = templ_type;
     recog->train_done = FALSE;
 
         /* Restock the scaled character images and recompute all averages */
@@ -2032,14 +2088,16 @@ recogSetScaling(L_RECOG  *recog,
  *                        Static debug helper                             *
  *------------------------------------------------------------------------*/
 /*!
- *  l_showIndicatorSplitValues()
+ * \brief   l_showIndicatorSplitValues()
  *
- *      Input:  7 indicator array
+ * \param[in]  na1, na2, na3, na4, na5, na6  6 indicator array
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) The values indicate that specific criteria has been met
  *          for component removal by pre-splitting filter..
  *          The 'result' line shows which components have been removed.
+ * </pre>
  */
 static void
 l_showIndicatorSplitValues(NUMA  *na1,
@@ -2047,8 +2105,7 @@ l_showIndicatorSplitValues(NUMA  *na1,
                            NUMA  *na3,
                            NUMA  *na4,
                            NUMA  *na5,
-                           NUMA  *na6,
-                           NUMA  *na7)
+                           NUMA  *na6)
 {
 l_int32  i, n;
 
@@ -2069,12 +2126,9 @@ l_int32  i, n;
     fprintf(stderr, "\nlt minaf:   ");
     for (i = 0; i < n; i++)
         fprintf(stderr, "%4d ", (l_int32)na5->array[i]);
-    fprintf(stderr, "\ngt maxaf:   ");
-    for (i = 0; i < n; i++)
-        fprintf(stderr, "%4d ", (l_int32)na6->array[i]);
     fprintf(stderr, "\n------------------------------------------------");
     fprintf(stderr, "\nresult:     ");
     for (i = 0; i < n; i++)
-        fprintf(stderr, "%4d ", (l_int32)na7->array[i]);
+        fprintf(stderr, "%4d ", (l_int32)na6->array[i]);
     fprintf(stderr, "\n================================================\n");
 }

@@ -24,8 +24,9 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-/*
- *  recogdid.c
+/*!
+ * \file recogdid.c
+ * <pre>
  *
  *      Top-level identification
  *         l_int32           recogDecode()
@@ -149,6 +150,7 @@
  *  * "Document Image Decoding using Iterated Complete Path Search with
  *    Subsampled Heuristic Scoring", Bloomberg, Minka and Popat, ICDAR 2001,
  *    p. 344-349, Sept. 2001, Seattle.
+ * </pre>
  */
 
 #include <string.h>
@@ -173,21 +175,21 @@ static const l_int32    MaxYShift = 1;
      * than 0.5 and smaller than 1.0.  For more accuracy in template
      * matching, use a 4-level template, where levels 2 and 3 are
      * boundary pixels in the fg and bg, respectively. */
-static const l_float32  DefaultAlpha2[] = {0.95, 0.9};
-static const l_float32  DefaultAlpha4[] = {0.95, 0.9, 0.75, 0.25};
+static const l_float32  DefaultAlpha2[] = {0.95f, 0.9f};
+static const l_float32  DefaultAlpha4[] = {0.95f, 0.9f, 0.75f, 0.25f};
 
 
 /*------------------------------------------------------------------------*
  *                       Top-level identification                         *
  *------------------------------------------------------------------------*/
 /*!
- *  recogDecode()
+ * \brief   recogDecode()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              pixs (typically of multiple touching characters, 1 bpp)
- *              nlevels (of templates; 2 for now)
- *              &pixdb (<optional return> debug result; can be null)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog with LUT's pre-computed
+ * \param[in]    pixs typically of multiple touching characters, 1 bpp
+ * \param[in]    nlevels of templates; 2 for now
+ * \param[out]   ppixdb [optional] debug result; can be null
+ * \return  0 if OK, 1 on error
  */
 l_int32
 recogDecode(L_RECOG  *recog,
@@ -237,14 +239,15 @@ PIXA    *pixa;
  *                       Generate decoding arrays                         *
  *------------------------------------------------------------------------*/
 /*!
- *  recogMakeDecodingArrays()
+ * \brief   recogMakeDecodingArrays()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              pixs (typically of multiple touching characters, 1 bpp)
- *              debug (1 for debug output; 0 otherwise)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog with LUT's pre-computed
+ * \param[in]    pixs typically of multiple touching characters, 1 bpp
+ * \param[in]    debug 1 for debug output; 0 otherwise
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Generates the bit-and sum arrays for each character template
  *          along pixs.  These are used in the dynamic programming step.
  *      (2) Previous arrays are destroyed and the new arrays are allocated.
@@ -252,6 +255,7 @@ PIXA    *pixa;
  *          of the template.  They are used in the viterbi process
  *          at the setwidth position (which is near the RHS of the template
  *          as it is positioned on pixs) in the generated trellis.
+ * </pre>
  */
 l_int32
 recogMakeDecodingArrays(L_RECOG  *recog,
@@ -297,17 +301,19 @@ L_RDID  *did;
 
 
 /*!
- *  recogMakeDecodingArray()
+ * \brief   recogMakeDecodingArray()
  *
- *      Input:  recog
- *              index (of averaged template)
- *              debug (1 for debug output; 0 otherwise)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \param[in]    index of averaged template
+ * \param[in]    debug 1 for debug output; 0 otherwise
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) Generates the bit-and sum array for a character template along pixs.
  *      (2) The values are saved in the scoring arrays at the left edge
  *          of the template as it is positioned on pixs.
+ * </pre>
  */
 static l_int32
 recogMakeDecodingArray(L_RECOG  *recog,
@@ -351,7 +357,7 @@ L_RDID   *did;
         /* Set up the array for ycent1.  This gives the y-centroid location
          * for a window of width w2, starting at location i. */
     nx = w1 - w2 + 1;  /* number of positions w2 can be placed in w1 */
-    ycent1 = (l_int32 *)CALLOC(nx, sizeof(l_int32));
+    ycent1 = (l_int32 *)LEPT_CALLOC(nx, sizeof(l_int32));
     arraysum = numaGetIArray(nasum);
     arraymoment = numaGetIArray(namoment);
     for (i = 0, sum = 0, moment = 0; i < w2; i++) {
@@ -395,9 +401,9 @@ L_RDID   *did;
 
     pixDestroy(&pix2);
     pixDestroy(&pix3);
-    FREE(ycent1);
-    FREE(arraysum);
-    FREE(arraymoment);
+    LEPT_FREE(ycent1);
+    LEPT_FREE(arraysum);
+    LEPT_FREE(arraymoment);
     return 0;
 }
 
@@ -406,13 +412,14 @@ L_RDID   *did;
  *                  Dynamic programming for best path
  *------------------------------------------------------------------------*/
 /*!
- *  recogRunViterbi()
+ * \brief   recogRunViterbi()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              &pixdb (<optional return> debug result; can be null)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog with LUT's pre-computed
+ * \param[out]   ppixdb [optional] debug result; can be null
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This is recursive, in that
  *          (a) we compute the score successively at all pixel positions x,
  *          (b) to compute the score at x in the trellis, for each
@@ -422,6 +429,7 @@ L_RDID   *did;
  *              score that maximizes the sum of the score at (x - setwidth)
  *              and the log-likelihood for the template to be printed with
  *              its LHS there.
+ * </pre>
  */
 l_int32
 recogRunViterbi(L_RECOG  *recog,
@@ -438,6 +446,7 @@ L_RDID     *did;
 
     PROCNAME("recogRunViterbi");
 
+    if (ppixdb) *ppixdb = NULL;
     if (!recog)
         return ERROR_INT("recog not defined", procName, 1);
     if ((did = recogGetDid(recog)) == NULL)
@@ -531,21 +540,23 @@ L_RDID     *did;
         *ppixdb = recogShowPath(recog, 0);
     }
 
-    FREE(area2);
+    LEPT_FREE(area2);
     return 0;
 }
 
 
 /*!
- *  recogRescoreDidResult()
+ * \brief   recogRescoreDidResult()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              &pixdb (<optional return> debug result; can be null)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog with LUT's pre-computed
+ * \param[out]   ppixdb [optional] debug result; can be null
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This does correlation matching with all templates using the
  *          viterbi path segmentation.
+ * </pre>
  */
 static l_int32
 recogRescoreDidResult(L_RECOG  *recog,
@@ -560,6 +571,7 @@ L_RDID    *did;
 
     PROCNAME("recogRescoreDidResult");
 
+    if (ppixdb) *ppixdb = NULL;
     if (!recog)
         return ERROR_INT("recog not defined", procName, 1);
     if ((did = recogGetDid(recog)) == NULL)
@@ -590,7 +602,7 @@ L_RDID    *did;
         }
         pixDestroy(&pix1);
         boxDestroy(&box1);
-        FREE(text);
+        LEPT_FREE(text);
     }
 
 /*    numaWriteStream(stderr, recog->did->nadely_r);  */
@@ -603,11 +615,11 @@ L_RDID    *did;
 
 
 /*!
- *  recogShowPath()
+ * \brief   recogShowPath()
  *
- *      Input:  recog (with LUT's pre-computed)
- *              select (0 for Viterbi; 1 for rescored)
- *      Return: pix (debug output), or null on error)
+ * \param[in]    recog with LUT's pre-computed
+ * \param[in]    select 0 for Viterbi; 1 for rescored
+ * \return  pix debug output), or NULL on error
  */
 static PIX *
 recogShowPath(L_RECOG  *recog,
@@ -627,13 +639,8 @@ L_RDID    *did;
         return (PIX *)ERROR_PTR("recog not defined", procName, NULL);
     if ((did = recogGetDid(recog)) == NULL)
         return (PIX *)ERROR_PTR("did not defined", procName, NULL);
-    if (recog->fontdir == NULL) {
-        L_WARNING("no bitmap fonts available\n", procName);
-        bmf = NULL;
-    } else {
-        bmf = bmfCreate(recog->fontdir, 8);
-    }
 
+    bmf = bmfCreate(NULL, 8);
     pixs = pixScale(did->pixs, 4.0, 4.0);
     pix0 = pixAddBorderGeneral(pixs, 0, 0, 0, 40, 0);
     pix1 = pixConvertTo32(pix0);
@@ -658,7 +665,7 @@ L_RDID    *did;
         pixXor(pix4, pix4, pix3);
         numaGetFValue(nascore_s, i, &score);
         snprintf(textstr, sizeof(textstr), "%5.3f", score);
-        pix5 = pixAddSingleTextline(pix4, bmf, textstr, 1, L_ADD_BELOW);
+        pix5 = pixAddTextlines(pix4, bmf, textstr, 1, L_ADD_BELOW);
         numaGetIValue(naxloc_s, i, &xloc);
         numaGetIValue(nadely_s, i, &dely);
         pixPaintThroughMask(pix1, pix5, 4 * xloc, 4 * dely, 0xff000000);
@@ -678,11 +685,11 @@ L_RDID    *did;
  *                  Create/destroy temporary DID data                     *
  *------------------------------------------------------------------------*/
 /*!
- *  recogCreateDid()
+ * \brief   recogCreateDid()
  *
- *      Input:  recog
- *              pixs (of 1 bpp image to match)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \param[in]    pixs of 1 bpp image to match
+ * \return  0 if OK, 1 on error
  */
 l_int32
 recogCreateDid(L_RECOG  *recog,
@@ -701,7 +708,7 @@ L_RDID  *did;
 
     recogDestroyDid(recog);
 
-    did = (L_RDID *)CALLOC(1, sizeof(L_RDID));
+    did = (L_RDID *)LEPT_CALLOC(1, sizeof(L_RDID));
     recog->did = did;
     did->pixs = pixClone(pixs);
     did->narray = recog->setsize;
@@ -718,16 +725,16 @@ L_RDID  *did;
     did->nascore_r = numaCreate(5);
 
         /* Make the arrays */
-    did->setwidth = (l_int32 *)CALLOC(did->narray, sizeof(l_int32));
-    did->counta = (l_int32 **)CALLOC(did->narray, sizeof(l_int32 *));
-    did->delya = (l_int32 **)CALLOC(did->narray, sizeof(l_int32 *));
-    did->beta = (l_float32 *)CALLOC(5, sizeof(l_float32));
-    did->gamma = (l_float32 *)CALLOC(5, sizeof(l_float32));
-    did->trellisscore = (l_float32 *)CALLOC(did->size, sizeof(l_float32));
-    did->trellistempl = (l_int32 *)CALLOC(did->size, sizeof(l_int32));
+    did->setwidth = (l_int32 *)LEPT_CALLOC(did->narray, sizeof(l_int32));
+    did->counta = (l_int32 **)LEPT_CALLOC(did->narray, sizeof(l_int32 *));
+    did->delya = (l_int32 **)LEPT_CALLOC(did->narray, sizeof(l_int32 *));
+    did->beta = (l_float32 *)LEPT_CALLOC(5, sizeof(l_float32));
+    did->gamma = (l_float32 *)LEPT_CALLOC(5, sizeof(l_float32));
+    did->trellisscore = (l_float32 *)LEPT_CALLOC(did->size, sizeof(l_float32));
+    did->trellistempl = (l_int32 *)LEPT_CALLOC(did->size, sizeof(l_int32));
     for (i = 0; i < did->narray; i++) {
-        did->counta[i] = (l_int32 *)CALLOC(did->size, sizeof(l_int32));
-        did->delya[i] = (l_int32 *)CALLOC(did->size, sizeof(l_int32));
+        did->counta[i] = (l_int32 *)LEPT_CALLOC(did->size, sizeof(l_int32));
+        did->delya[i] = (l_int32 *)LEPT_CALLOC(did->size, sizeof(l_int32));
     }
 
         /* Populate the setwidth array */
@@ -742,14 +749,16 @@ L_RDID  *did;
 
 
 /*!
- *  recogDestroyDid()
+ * \brief   recogDestroyDid()
  *
- *      Input:  recog
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) As the signature indicates, this is owned by the recog, and can
  *          only be destroyed using this function.
+ * </pre>
  */
 l_int32
 recogDestroyDid(L_RECOG  *recog)
@@ -767,16 +776,16 @@ L_RDID  *did;
         return ERROR_INT("ptr array is null; shouldn't happen!", procName, 1);
 
     for (i = 0; i < did->narray; i++) {
-        FREE(did->counta[i]);
-        FREE(did->delya[i]);
+        LEPT_FREE(did->counta[i]);
+        LEPT_FREE(did->delya[i]);
     }
-    FREE(did->setwidth);
-    FREE(did->counta);
-    FREE(did->delya);
-    FREE(did->beta);
-    FREE(did->gamma);
-    FREE(did->trellisscore);
-    FREE(did->trellistempl);
+    LEPT_FREE(did->setwidth);
+    LEPT_FREE(did->counta);
+    LEPT_FREE(did->delya);
+    LEPT_FREE(did->beta);
+    LEPT_FREE(did->gamma);
+    LEPT_FREE(did->trellisscore);
+    LEPT_FREE(did->trellistempl);
     pixDestroy(&did->pixs);
     numaDestroy(&did->nasum);
     numaDestroy(&did->namoment);
@@ -790,7 +799,7 @@ L_RDID  *did;
     numaDestroy(&did->nadely_r);
     numaDestroy(&did->nawidth_r);
     numaDestroy(&did->nascore_r);
-    FREE(did);
+    LEPT_FREE(did);
     recog->did = NULL;
     return 0;
 }
@@ -800,10 +809,10 @@ L_RDID  *did;
  *                            Various helpers                             *
  *------------------------------------------------------------------------*/
 /*!
- *  recogDidExists()
+ * \brief   recogDidExists()
  *
- *      Input:  recog
- *      Return: 1 if recog->did exists; 0 if not or on error.
+ * \param[in]    recog
+ * \return  1 if recog->did exists; 0 if not or on error.
  */
 l_int32
 recogDidExists(L_RECOG  *recog)
@@ -817,13 +826,15 @@ recogDidExists(L_RECOG  *recog)
 
 
 /*!
- *  recogGetDid()
+ * \brief   recogGetDid()
  *
- *      Input:  recog
- *      Return: did (still owned by the recog), or null on error
+ * \param[in]    recog
+ * \return  did still owned by the recog, or NULL on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This also makes sure the arrays are defined.
+ * </pre>
  */
 L_RDID *
 recogGetDid(L_RECOG  *recog)
@@ -851,22 +862,24 @@ L_RDID  *did;
 
 
 /*!
- *  recogGetWindowedArea()
+ * \brief   recogGetWindowedArea()
  *
- *      Input:  recog
- *              index (of template)
- *              x (pixel position of left hand edge of template)
- *              &dely (<return> y shift of template relative to pix1)
- *              &wsum (<return> number of fg pixels in window of pixs)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \param[in]    index of template
+ * \param[in]    x pixel position of left hand edge of template
+ * \param[out]   pdely y shift of template relative to pix1
+ * \param[out]   pwsum number of fg pixels in window of pixs
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This is called after the best path has been found through
  *          the trellis, in order to produce a correlation that can be used
  *          to evaluate the confidence we have in the identification.
- *          The correlation is |1 & 2|^2 / (|1| * |2|).
- *          |1 & 2| is given by the count array, |2| is found from
+ *          The correlation is |1 \& 2|^2 / (|1| * |2|).
+ *          |1 \& 2| is given by the count array, |2| is found from
  *          nasum_u[], and |1| is wsum returned from this function.
+ * </pre>
  */
 static l_int32
 recogGetWindowedArea(L_RECOG  *recog,
@@ -881,12 +894,10 @@ L_RDID  *did;
 
     PROCNAME("recogGetWindowedArea");
 
-    if (!pwsum)
-        return ERROR_INT("&wsum not defined", procName, 1);
-    *pwsum = 0;
-    if (!pdely)
-        return ERROR_INT("&dely not defined", procName, 1);
-    *pdely = 0;
+    if (pdely) *pdely = 0;
+    if (pwsum) *pwsum = 0;
+    if (!pdely || !pwsum)
+        return ERROR_INT("&dely and &wsum not both defined", procName, 1);
     if (!recog)
         return ERROR_INT("recog not defined", procName, 1);
     if ((did = recogGetDid(recog)) == NULL)
@@ -918,19 +929,21 @@ L_RDID  *did;
 
 
 /*!
- *  recogSetChannelParams()
+ * \brief   recogSetChannelParams()
  *
- *      Input:  recog
- *              nlevels
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog
+ * \param[in]    nlevels
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This converts the independent bit-flip probabilities in the
  *          "channel" into log-likelihood coefficients on image sums.
  *          These coefficients are only defined for the non-background
  *          template levels.  Thus for nlevels = 2 (one fg, one bg),
  *          only beta[1] and gamma[1] are used.  For nlevels = 4 (three
  *          fg templates), we use beta[1-3] and gamma[1-3].
+ * </pre>
  */
 l_int32
 recogSetChannelParams(L_RECOG  *recog,
@@ -965,16 +978,18 @@ L_RDID           *did;
 
 
 /*!
- *  recogTransferRchToDid()
+ * \brief   recogTransferRchToDid()
  *
- *      Input:  recog (with rch and did defined)
- *              x (left edge of extracted region, relative to decoded line)
- *              y (top edge of extracted region, relative to input image)
- *      Return: 0 if OK, 1 on error
+ * \param[in]    recog with rch and did defined
+ * \param[in]    x left edge of extracted region, relative to decoded line
+ * \param[in]    y top edge of extracted region, relative to input image
+ * \return  0 if OK, 1 on error
  *
- *  Notes:
+ * <pre>
+ * Notes:
  *      (1) This is used to transfer the results for a single character match
  *          to the rescored did arrays.
+ * </pre>
  */
 static l_int32
 recogTransferRchToDid(L_RECOG  *recog,
@@ -1000,6 +1015,3 @@ L_RCH   *rch;
     numaAddNumber(did->nascore_r, rch->score);
     return 0;
 }
-
-
-

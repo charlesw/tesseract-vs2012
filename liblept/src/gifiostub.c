@@ -24,17 +24,19 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-/*
- *  gifiostub.c
+/*!
+ * \file gifiostub.c
+ * <pre>
  *
  *     Stubs for gifio.c functions
+ * </pre>
  */
-
-#include "allheaders.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif  /* HAVE_CONFIG_H */
+
+#include "allheaders.h"
 
 /* -----------------------------------------------------------------*/
 #if  (!HAVE_LIBGIF) && (!HAVE_LIBUNGIF)     /* defined in environ.h */
@@ -68,4 +70,3 @@ l_int32 pixWriteMemGif(l_uint8 **pdata, size_t *psize, PIX *pix)
 
 /* -----------------------------------------------------------------*/
 #endif      /* !HAVE_LIBGIF && !HAVE_LIBUNGIF */
-/* -----------------------------------------------------------------*/

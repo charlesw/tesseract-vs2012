@@ -22,7 +22,7 @@
     <ProjectGuid>{E61592E1-28F4-4AFC-9EE1-9BE833A061C1}</ProjectGuid>
     <RootNamespace>jpeg</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>libjpeg-8c</ProjectName>
+    <ProjectName>libjpeg-9b</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -207,6 +207,9 @@
     <ClCompile Include="src\jquant1.c" />
     <ClCompile Include="src\jquant2.c" />
     <ClCompile Include="src\jutils.c" />
+    <ClCompile Include="src\rdcolmap.c" />
+    <ClCompile Include="src\jpegtran.c" />
+    <ClCompile Include="src\transupp.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\jconfig.h" />
@@ -218,6 +221,13 @@
     <ClInclude Include="include\jpegint.h" />
     <ClInclude Include="include\jpeglib.h" />
     <ClInclude Include="include\jversion.h" />
+    <ClInclude Include="include\transupp.h" />
+    <ClInclude Include="include\cderror.h" />
+    <ClInclude Include="include\cdjpeg.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="libjpeg-9b.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -10,7 +10,7 @@
  -     copyright notice, this list of conditions and the following
  -     disclaimer in the documentation and/or other materials
  -     provided with the distribution.
- - 
+ -
  -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,6 +33,7 @@
 #include <stdarg.h>
 
     /* General and configuration defs */
+#include "endianness.h"
 #include "environ.h"
 
     /* Generic and non-image-specific containers */
@@ -42,6 +43,7 @@
 #include "list.h"
 #include "ptra.h"
 #include "queue.h"
+#include "rbtree.h"
 #include "stack.h"
 
     /* Imaging */
@@ -56,6 +58,7 @@
 #include "pix.h"
 #include "recog.h"
 #include "regutils.h"
+#include "stringcode.h"
 #include "sudoku.h"
 #include "watershed.h"
 

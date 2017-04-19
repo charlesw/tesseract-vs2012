@@ -24,10 +24,12 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
-/*
- *  psio2stub.c
+/*!
+ * \file psio2stub.c
+ * <pre>
  *
  *     Stubs for psio2.c functions
+ * </pre>
  */
 
 #include "allheaders.h"
@@ -160,7 +162,7 @@ char * generateG4PS(const char *filein, L_COMP_DATA *cid, l_float32 xpt,
 /* ----------------------------------------------------------------------*/
 
 l_int32 convertTiffMultipageToPS(const char *filein, const char *fileout,
-                                 const char *tempfile, l_float32 fillfract)
+                                 l_float32 fillfract)
 {
     return ERROR_INT("function not present", "convertTiffMultipageToPS", 1);
 }
@@ -221,20 +223,6 @@ l_int32 getResLetterPage(l_int32 w, l_int32 h, l_float32 fillfract)
 l_int32 getResA4Page(l_int32 w, l_int32 h, l_float32 fillfract)
 {
     return ERROR_INT("function not present", "getResA4Page", 1);
-}
-
-/* ----------------------------------------------------------------------*/
-
-char * encodeAscii85(l_uint8 *inarray, l_int32 insize, l_int32 *poutsize)
-{
-    return (char *)ERROR_PTR("function not present", "encodeAscii85", NULL);
-}
-
-/* ----------------------------------------------------------------------*/
-
-l_uint8 * decodeAscii85(char *ina, l_int32 insize, l_int32 *poutsize)
-{
-    return (l_uint8 *)ERROR_PTR("function not present", "decodeAscii85", NULL);
 }
 
 /* ----------------------------------------------------------------------*/

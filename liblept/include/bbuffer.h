@@ -10,7 +10,7 @@
  -     copyright notice, this list of conditions and the following
  -     disclaimer in the documentation and/or other materials
  -     provided with the distribution.
- - 
+ -
  -  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  -  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  -  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -27,9 +27,10 @@
 #ifndef  LEPTONICA_BBUFFER_H
 #define  LEPTONICA_BBUFFER_H
 
-/*
- *  bbuffer.h
+/*!
+ * \file bbuffer.h
  *
+ * <pre>
  *      Expandable byte buffer for reading data in from memory and
  *      writing data out to other memory.
  *
@@ -42,16 +43,18 @@
  *      number of bytes that have been read into the array.
  *
  *      For implementation details, see bbuffer.c.
+ * </pre>
  */
 
-struct ByteBuffer
+/*! Expandable byte buffer for memory read/write operations */
+struct L_ByteBuffer
 {
-    l_int32      nalloc;       /* size of allocated byte array            */
-    l_int32      n;            /* number of bytes read into to the array  */
-    l_int32      nwritten;     /* number of bytes written from the array  */
-    l_uint8     *array;        /* byte array                              */
+    l_int32      nalloc;       /*!< size of allocated byte array            */
+    l_int32      n;            /*!< number of bytes read into to the array  */
+    l_int32      nwritten;     /*!< number of bytes written from the array  */
+    l_uint8     *array;        /*!< byte array                              */
 };
-typedef struct ByteBuffer BBUFFER;
+typedef struct L_ByteBuffer L_BBUFFER;
 
 
 #endif  /* LEPTONICA_BBUFFER_H */
