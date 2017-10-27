@@ -112,8 +112,10 @@ PIXCMAP    *cmap;
         return (PIXCMAP *)ERROR_PTR("cmap not made", procName, NULL);
     cmap->depth = depth;
     cmap->nalloc = 1 << depth;
-    if ((cta = (RGBA_QUAD *)CALLOC(cmap->nalloc, sizeof(RGBA_QUAD))) == NULL)
-        return (PIXCMAP *)ERROR_PTR("cta not made", procName, NULL);
+	if ((cta = (RGBA_QUAD *)CALLOC(cmap->nalloc, sizeof(RGBA_QUAD))) == NULL) {
+		FREE(cmap);
+		return (PIXCMAP *)ERROR_PTR("cta not made", procName, NULL);
+	}
     cmap->array = cta;
     cmap->n = 0;
 
@@ -233,8 +235,10 @@ PIXCMAP  *cmapd;
     if ((cmapd = (PIXCMAP *)CALLOC(1, sizeof(PIXCMAP))) == NULL)
         return (PIXCMAP *)ERROR_PTR("cmapd not made", procName, NULL);
     nbytes = cmaps->nalloc * sizeof(RGBA_QUAD);
-    if ((cmapd->array = (void *)CALLOC(1, nbytes)) == NULL)
-        return (PIXCMAP *)ERROR_PTR("cmap array not made", procName, NULL);
+	if ((cmapd->array = (void *)CALLOC(1, nbytes)) == NULL) {
+		FREE(cmapd);
+		return (PIXCMAP *)ERROR_PTR("cmap array not made", procName, NULL);
+	}
     memcpy(cmapd->array, cmaps->array, nbytes);
     cmapd->n = cmaps->n;
     cmapd->nalloc = cmaps->nalloc;
@@ -1463,10 +1467,14 @@ RGBA_QUAD  *cta;
         return ERROR_INT("cmap not defined", procName, 1);
 
     ncolors = pixcmapGetCount(cmap);
-    if (((rmap = (l_int32 *)CALLOC(ncolors, sizeof(l_int32))) == NULL) ||
-        ((gmap = (l_int32 *)CALLOC(ncolors, sizeof(l_int32))) == NULL) ||
-        ((bmap = (l_int32 *)CALLOC(ncolors, sizeof(l_int32))) == NULL))
-            return ERROR_INT("calloc fail for *map", procName, 1);
+	if (((rmap = (l_int32 *)CALLOC(ncolors, sizeof(l_int32))) == NULL) ||
+		((gmap = (l_int32 *)CALLOC(ncolors, sizeof(l_int32))) == NULL) ||
+		((bmap = (l_int32 *)CALLOC(ncolors, sizeof(l_int32))) == NULL)) {
+		FREE(rmap);
+		FREE(gmap);
+		FREE(bmap);
+		return ERROR_INT("calloc fail for *map", procName, 1);
+	}
     *prmap = rmap;
     *pgmap = gmap;
     *pbmap = bmap;

@@ -133,8 +133,10 @@ BBUFFER  *bb;
 
     if ((bb = (BBUFFER *)CALLOC(1, sizeof(BBUFFER))) == NULL)
         return (BBUFFER *)ERROR_PTR("bb not made", procName, NULL);
-    if ((bb->array = (l_uint8 *)CALLOC(nalloc, sizeof(l_uint8))) == NULL)
-        return (BBUFFER *)ERROR_PTR("byte array not made", procName, NULL);
+	if ((bb->array = (l_uint8 *)CALLOC(nalloc, sizeof(l_uint8))) == NULL) {
+		FREE(bb);
+		return (BBUFFER *)ERROR_PTR("byte array not made", procName, NULL);
+	}
     bb->nalloc = nalloc;
     bb->nwritten = 0;
 

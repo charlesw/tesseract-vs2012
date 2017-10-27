@@ -461,8 +461,10 @@ BOXA  *boxa;
     boxa->nalloc = n;
     boxa->refcount = 1;
 
-    if ((boxa->box = (BOX **)CALLOC(n, sizeof(BOX *))) == NULL)
-        return (BOXA *)ERROR_PTR("boxa ptrs not made", procName, NULL);
+	if ((boxa->box = (BOX **)CALLOC(n, sizeof(BOX *))) == NULL) {
+		FREE(boxa);
+		return (BOXA *)ERROR_PTR("boxa ptrs not made", procName, NULL);
+	}
 
     return boxa;
 }
@@ -1144,8 +1146,10 @@ BOXAA  *baa;
 
     if ((baa = (BOXAA *)CALLOC(1, sizeof(BOXAA))) == NULL)
         return (BOXAA *)ERROR_PTR("baa not made", procName, NULL);
-    if ((baa->boxa = (BOXA **)CALLOC(n, sizeof(BOXA *))) == NULL)
-        return (BOXAA *)ERROR_PTR("boxa ptr array not made", procName, NULL);
+	if ((baa->boxa = (BOXA **)CALLOC(n, sizeof(BOXA *))) == NULL) {
+		FREE(baa);
+		return (BOXAA *)ERROR_PTR("boxa ptr array not made", procName, NULL);
+	}
 
     baa->nalloc = n;
     baa->n = 0;
