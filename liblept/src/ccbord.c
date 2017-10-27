@@ -313,8 +313,10 @@ CCBORDA  *ccba;
     ccba->n = 0;
     ccba->nalloc = n;
 
-    if ((ccba->ccb = (CCBORD **)CALLOC(n, sizeof(CCBORD *))) == NULL)
-        return (CCBORDA *)ERROR_PTR("ccba ptrs not made", procName, NULL);
+	if ((ccba->ccb = (CCBORD **)CALLOC(n, sizeof(CCBORD *))) == NULL) {
+		FREE(ccba);
+		return (CCBORDA *)ERROR_PTR("ccba ptrs not made", procName, NULL);
+	}
 
     return ccba;
 }
@@ -378,14 +380,20 @@ PTAA    *local;
     ccb->refcount++;
     if (pixs)
         ccb->pix = pixClone(pixs);
-    if ((boxa = boxaCreate(1)) == NULL)
-        return (CCBORD *)ERROR_PTR("boxa not made", procName, NULL);
+	if ((boxa = boxaCreate(1)) == NULL) {
+		FREE(ccb);
+		return (CCBORD *)ERROR_PTR("boxa not made", procName, NULL);
+	}
     ccb->boxa = boxa;
-    if ((start = ptaCreate(1)) == NULL)
-        return (CCBORD *)ERROR_PTR("start pta not made", procName, NULL);
+	if ((start = ptaCreate(1)) == NULL) {
+		FREE(ccb);
+		return (CCBORD *)ERROR_PTR("start pta not made", procName, NULL);
+	}
     ccb->start = start;
-    if ((local = ptaaCreate(1)) == NULL)
-        return (CCBORD *)ERROR_PTR("local ptaa not made", procName, NULL);
+	if ((local = ptaaCreate(1)) == NULL) {
+		FREE(ccb);
+		return (CCBORD *)ERROR_PTR("local ptaa not made", procName, NULL);
+	}
     ccb->local = local;
 
     return ccb;

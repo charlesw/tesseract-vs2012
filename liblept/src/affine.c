@@ -1303,26 +1303,31 @@ l_uint32  *lines;
  */
 l_int32
 gaussjordan(l_float32  **a,
-            l_float32   *b,
-            l_int32      n)
+	l_float32   *b,
+	l_int32      n)
 {
-l_int32    i, icol, irow, j, k, col, row;
-l_int32   *indexc, *indexr, *ipiv;
-l_float32  maxval, val, pivinv, temp;
+	l_int32    i, icol, irow, j, k, col, row;
+	l_int32   *indexc, *indexr, *ipiv;
+	l_float32  maxval, val, pivinv, temp;
 
-    PROCNAME("gaussjordan");
+	PROCNAME("gaussjordan");
 
-    if (!a)
-        return ERROR_INT("a not defined", procName, 1);
-    if (!b)
-        return ERROR_INT("b not defined", procName, 1);
+	if (!a)
+		return ERROR_INT("a not defined", procName, 1);
+	if (!b)
+		return ERROR_INT("b not defined", procName, 1);
 
-    if ((indexc = (l_int32 *)CALLOC(n, sizeof(l_int32))) == NULL)
-        return ERROR_INT("indexc not made", procName, 1);
-    if ((indexr = (l_int32 *)CALLOC(n, sizeof(l_int32))) == NULL)
-        return ERROR_INT("indexr not made", procName, 1);
-    if ((ipiv = (l_int32 *)CALLOC(n, sizeof(l_int32))) == NULL)
-        return ERROR_INT("ipiv not made", procName, 1);
+	if ((indexc = (l_int32 *)CALLOC(n, sizeof(l_int32))) == NULL)
+		return ERROR_INT("indexc not made", procName, 1);
+	if ((indexr = (l_int32 *)CALLOC(n, sizeof(l_int32))) == NULL) {
+		FREE(indexc);
+		return ERROR_INT("indexr not made", procName, 1);
+	}
+	if ((ipiv = (l_int32 *)CALLOC(n, sizeof(l_int32))) == NULL) {
+		FREE(indexr);
+		FREE(indexc);
+		return ERROR_INT("ipiv not made", procName, 1);
+	}
 
     for (i = 0; i < n; i++) {
         maxval = 0.0;
@@ -1336,6 +1341,9 @@ l_float32  maxval, val, pivinv, temp;
                             icol = k;
                         }
                     } else if (ipiv[k] > 1) {
+						FREE(indexr);
+						FREE(indexc);
+						FREE(ipiv);
                         return ERROR_INT("singular matrix", procName, 1);
                     }
                 }

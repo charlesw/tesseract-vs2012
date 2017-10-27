@@ -1001,12 +1001,31 @@ PIX       *pixd;
         buf2r = (l_int32 *)CALLOC(w, sizeof(l_int32));
         buf2g = (l_int32 *)CALLOC(w, sizeof(l_int32));
         buf2b = (l_int32 *)CALLOC(w, sizeof(l_int32));
-        if (!bufu8r || !bufu8g || !bufu8b)
-            return (PIX *)ERROR_PTR("uint8 mono line buf not made",
-                procName, NULL);
-        if (!buf1r || !buf1g || !buf1b || !buf2r || !buf2g || !buf2b)
-            return (PIX *)ERROR_PTR("mono line buf not made", procName, NULL);
-
+		if (!bufu8r || !bufu8g || !bufu8b) {
+			FREE(bufu8r); 
+			FREE(bufu8g);
+			FREE(bufu8b);
+			FREE(buf1r);
+			FREE(buf1g);
+			FREE(buf1b);
+			FREE(buf2r);
+			FREE(buf2g);
+			FREE(buf2b);
+			return (PIX *)ERROR_PTR("uint8 mono line buf not made",
+				procName, NULL);
+		}
+		if (!buf1r || !buf1g || !buf1b || !buf2r || !buf2g || !buf2b) {
+			FREE(bufu8r);
+			FREE(bufu8g);
+			FREE(bufu8b);
+			FREE(buf1r);
+			FREE(buf1g);
+			FREE(buf1b);
+			FREE(buf2r);
+			FREE(buf2g);
+			FREE(buf2b);
+			return (PIX *)ERROR_PTR("mono line buf not made", procName, NULL);
+		}
             /* Start by priming buf2; line 1 is above line 2 */
         pixGetRGBLine(pixs, 0, bufu8r, bufu8g, bufu8b);
         for (j = 0; j < w; j++) {
@@ -1228,12 +1247,16 @@ CQCELL   **cqca;   /* one array for each octree level */
         return (CQCELL ***)ERROR_PTR("cqcaa not made", procName, NULL);
     for (level = 0; level <= CQ_NLEVELS; level++) {
         ncells = 1 << (3 * level);
-        if ((cqca = (CQCELL **)CALLOC(ncells, sizeof(CQCELL *))) == NULL)
-            return (CQCELL ***)ERROR_PTR("cqca not made", procName, NULL);
+		if ((cqca = (CQCELL **)CALLOC(ncells, sizeof(CQCELL *))) == NULL) {
+			FREE(cqcaa);
+			return (CQCELL ***)ERROR_PTR("cqca not made", procName, NULL);
+		}
         cqcaa[level] = cqca;
         for (i = 0; i < ncells; i++) {
-            if ((cqca[i] = (CQCELL *)CALLOC(1, sizeof(CQCELL))) == NULL)
-                return (CQCELL ***)ERROR_PTR("cqc not made", procName, NULL);
+			if ((cqca[i] = (CQCELL *)CALLOC(1, sizeof(CQCELL))) == NULL) {
+				FREE(cqcaa);
+				return (CQCELL ***)ERROR_PTR("cqc not made", procName, NULL);
+			}
         }
     }
 
@@ -1327,10 +1350,15 @@ l_uint32  *rtab, *gtab, *btab;
         return ERROR_INT("&*tab not defined", procName, 1);
     if ((rtab = (l_uint32 *)CALLOC(256, sizeof(l_uint32))) == NULL)
         return ERROR_INT("rtab not made", procName, 1);
-    if ((gtab = (l_uint32 *)CALLOC(256, sizeof(l_uint32))) == NULL)
-        return ERROR_INT("gtab not made", procName, 1);
-    if ((btab = (l_uint32 *)CALLOC(256, sizeof(l_uint32))) == NULL)
-        return ERROR_INT("btab not made", procName, 1);
+	if ((gtab = (l_uint32 *)CALLOC(256, sizeof(l_uint32))) == NULL) {
+		FREE(rtab);
+		return ERROR_INT("gtab not made", procName, 1);
+	}
+	if ((btab = (l_uint32 *)CALLOC(256, sizeof(l_uint32))) == NULL) {
+		FREE(rtab);
+		FREE(gtab);
+		return ERROR_INT("btab not made", procName, 1);
+	}
     *prtab = rtab;
     *pgtab = gtab;
     *pbtab = btab;
@@ -1678,12 +1706,21 @@ PIXCMAP        *cmap;
 
     if ((narray = (l_int32 *)CALLOC(size, sizeof(l_int32))) == NULL)
         return (PIX *)ERROR_PTR("narray not made", procName, NULL);
-    if ((rarray = (l_int32 *)CALLOC(size, sizeof(l_int32))) == NULL)
-        return (PIX *)ERROR_PTR("rarray not made", procName, NULL);
-    if ((garray = (l_int32 *)CALLOC(size, sizeof(l_int32))) == NULL)
-        return (PIX *)ERROR_PTR("garray not made", procName, NULL);
-    if ((barray = (l_int32 *)CALLOC(size, sizeof(l_int32))) == NULL)
-        return (PIX *)ERROR_PTR("barray not made", procName, NULL);
+	if ((rarray = (l_int32 *)CALLOC(size, sizeof(l_int32))) == NULL) {
+		FREE(narray);
+		return (PIX *)ERROR_PTR("rarray not made", procName, NULL);
+	}
+	if ((garray = (l_int32 *)CALLOC(size, sizeof(l_int32))) == NULL) {
+		FREE(narray);
+		FREE(rarray);
+		return (PIX *)ERROR_PTR("garray not made", procName, NULL);
+	}
+	if ((barray = (l_int32 *)CALLOC(size, sizeof(l_int32))) == NULL) {
+		FREE(narray);
+		FREE(rarray);
+		FREE(garray);
+		return (PIX *)ERROR_PTR("barray not made", procName, NULL);
+	}
 
         /* Place the pixels in octcube leaves. */
     datas = pixGetData(pixs);
@@ -1970,10 +2007,30 @@ PIXCMAP   *cmap;
     buf2r = (l_int32 *)CALLOC(w, sizeof(l_int32));
     buf2g = (l_int32 *)CALLOC(w, sizeof(l_int32));
     buf2b = (l_int32 *)CALLOC(w, sizeof(l_int32));
-    if (!bufu8r || !bufu8g || !bufu8b)
-        return ERROR_INT("uint8 line buf not made", procName, 1);
-    if (!buf1r || !buf1g || !buf1b || !buf2r || !buf2g || !buf2b)
-        return ERROR_INT("mono line buf not made", procName, 1);
+	if (!bufu8r || !bufu8g || !bufu8b) {
+		FREE(bufu8r);
+		FREE(bufu8g);
+		FREE(bufu8b);
+		FREE(buf1r);
+		FREE(buf1g);
+		FREE(buf1b);
+		FREE(buf2r);
+		FREE(buf2g);
+		FREE(buf2b);
+		return ERROR_INT("uint8 line buf not made", procName, 1);
+	}
+	if (!buf1r || !buf1g || !buf1b || !buf2r || !buf2g || !buf2b) {
+		FREE(bufu8r);
+		FREE(bufu8g);
+		FREE(bufu8b);
+		FREE(buf1r);
+		FREE(buf1g);
+		FREE(buf1b);
+		FREE(buf2r);
+		FREE(buf2g);
+		FREE(buf2b);
+		return ERROR_INT("mono line buf not made", procName, 1);
+	}
 
         /* Start by priming buf2; line 1 is above line 2 */
     pixGetRGBLine(pixs, 0, bufu8r, bufu8g, bufu8b);
@@ -2283,15 +2340,22 @@ PIXCMAP   *cmap;
                                        rtab, gtab, btab, &index);
 /*                fprintf(stderr, "rval = %d, gval = %d, bval = %d, index = %d\n",
                         rval, gval, bval, index); */
-                switch (bpp) {
-                case 4:
-                    SET_DATA_QBIT(lined, j, index);
-                    break;
-                case 8:
-                    SET_DATA_BYTE(lined, j, index);
-                    break;
-                default:
-                    return (PIX *)ERROR_PTR("bpp not 4 or 8!", procName, NULL);
+				switch (bpp) {
+				case 4:
+					SET_DATA_QBIT(lined, j, index);
+					break;
+				case 8:
+					SET_DATA_BYTE(lined, j, index);
+					break;
+				default:
+					for (i = 0; i < nbase; i++)
+						FREE(oqca[i]);
+					FREE(oqca);
+					FREE(rtab);
+					FREE(gtab);
+					FREE(btab);
+
+					return (PIX *)ERROR_PTR("bpp not 4 or 8!", procName, NULL);					
                     break;
                 }
                 oqca[index]->n += 1.0;

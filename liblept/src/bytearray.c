@@ -98,8 +98,10 @@ L_BYTEA  *ba;
     if ((ba = (L_BYTEA *)CALLOC(1, sizeof(L_BYTEA))) == NULL)
         return (L_BYTEA *)ERROR_PTR("ba not made", procName, NULL);
 
-    if ((ba->data = (l_uint8 *)CALLOC(nbytes + 1, sizeof(l_uint8))) == NULL)
-        return (L_BYTEA *)ERROR_PTR("ba array not made", procName, NULL);
+	if ((ba->data = (l_uint8 *)CALLOC(nbytes + 1, sizeof(l_uint8))) == NULL) {
+		FREE(ba);
+		return (L_BYTEA *)ERROR_PTR("ba array not made", procName, NULL);
+	}
     ba->nalloc = nbytes + 1;
     ba->refcount = 1;
 

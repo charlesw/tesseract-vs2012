@@ -64,6 +64,7 @@ MakeMapObject(int ColorCount,
 
     Object->Colors = (GifColorType *)calloc(ColorCount, sizeof(GifColorType));
     if (Object->Colors == (GifColorType *) NULL) {
+		FREE(Object);
         return ((ColorMapObject *) NULL);
     }
 
